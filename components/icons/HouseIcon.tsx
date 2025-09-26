@@ -1,15 +1,12 @@
 import React from 'react';
 
 const HouseIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    viewBox="0 0 24 24"
-    fill="currentColor"
-    stroke="none"
-    {...props}
-  >
-    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-    <polyline points="9 22 9 12 15 12 15 22"></polyline>
+  <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" {...props}>
+    <path d="M16 3L2 14v15h28V14L16 3z" fill="#F5F5F5"/>
+    <path d="M16 3L2 14h28L16 3z" fill="#DD4F40"/>
+    <path d="M22 18h-4v10h4V18z" fill="#A6634B"/>
+    <path d="M14 18h-4v5h4v-5z" fill="#C1C1C1"/>
+    <path d="M13 24h-2v-3h2v3z" fill="#2D72B8"/>
   </svg>
 );
 

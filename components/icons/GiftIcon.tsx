@@ -1,22 +1,11 @@
 import React from 'react';
 
 const GiftIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    width="24"
-    height="24"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    {...props}
-  >
-    <rect x="3" y="8" width="18" height="4" rx="1"></rect>
-    <path d="M12 8v13"></path>
-    <path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"></path>
-    <path d="M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5"></path>
+  <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" {...props}>
+    <rect x="4" y="12" width="24" height="16" rx="2" fill="#5596E6"/>
+    <rect x="14" y="4" width="4" height="24" fill="#DD4F40"/>
+    <path d="M10 8 C6 8 4 12 4 12 L14 12 L14 8 Z" fill="#DD4F40"/>
+    <path d="M22 8 C26 8 28 12 28 12 L18 12 L18 8 Z" fill="#DD4F40"/>
   </svg>
 );
 

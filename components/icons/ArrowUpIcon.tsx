@@ -1,19 +1,10 @@
 import React from 'react';
 
 const ArrowUpIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    {...props}
-  >
-    <line x1="12" y1="19" x2="12" y2="5"></line>
-    <polyline points="5 12 12 5 19 12"></polyline>
-  </svg>
+    <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" {...props}>
+        <path fill="#4ADE80" d="M16 3 L4 15 l6 0 l0 14 l12 0 l0 -14 l6 0 Z"/>
+        <path fill="#22C55E" d="M16 3 L10 15 l3 0 l0 14 l6 0 l0 -14 l3 0 Z"/>
+    </svg>
 );
 
 export default ArrowUpIcon;

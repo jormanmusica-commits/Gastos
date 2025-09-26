@@ -13,10 +13,10 @@ const ScaleIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
     strokeLinejoin="round"
     {...props}
   >
-    <path d="M16 16.5l4-4L16.5 8" />
-    <path d="M8 16.5l-4-4L7.5 8" />
-    <path d="M4 12h16" />
-    <path d="M12 4v16" />
+    <path d="M3 6h18" />
+    <path d="M12 3v18" />
+    <path d="M5 9s-2 5 0 7c2 2 5 2 7 0" />
+    <path d="M19 9s2 5 0 7c-2 2-5 2-7 0" />
   </svg>
 );
 

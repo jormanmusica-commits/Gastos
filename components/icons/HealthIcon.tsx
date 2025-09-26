@@ -1,14 +1,13 @@
 import React from 'react';
 
 const HealthIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    viewBox="0 0 24 24"
-    fill="currentColor"
-    stroke="none"
-    {...props}
-  >
-    <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
+  <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" {...props}>
+    <rect x="4" y="8" width="24" height="20" rx="3" fill="#F5F5F5"/>
+    <rect x="4" y="6" width="24" height="4" rx="2" fill="#DD4F40"/>
+    <rect x="14" y="12" width="4" height="12" fill="#DD4F40"/>
+    <rect x="10" y="16" width="12" height="4" fill="#DD4F40"/>
+    <rect x="10" y="4" width="2" height="4" fill="#3A3A3A"/>
+    <rect x="20" y="4" width="2" height="4" fill="#3A3A3A"/>
   </svg>
 );
 

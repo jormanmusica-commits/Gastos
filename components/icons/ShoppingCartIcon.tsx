@@ -1,14 +1,12 @@
 import React from 'react';
 
 const ShoppingCartIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    viewBox="0 0 24 24"
-    fill="currentColor"
-    stroke="none"
-    {...props}
-  >
-    <path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49c.08-.14.12-.31.12-.48 0-.55-.45-1-1-1H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z"></path>
+  <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" {...props}>
+    <path d="M8 7 L10 21 H25 L28 10 H10" fill="#E0E0E0"/>
+    <path d="M6 5 L8 7 M28 10 L10 10" stroke="#575757" strokeWidth="2" fill="none"/>
+    <circle cx="12" cy="26" r="3" fill="#3A3A3A"/>
+    <circle cx="24" cy="26" r="3" fill="#3A3A3A"/>
+    <rect x="2" y="5" width="4" height="2" fill="#A6634B"/>
   </svg>
 );
 

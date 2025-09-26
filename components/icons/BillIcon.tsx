@@ -1,14 +1,12 @@
 import React from 'react';
 
 const BillIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    viewBox="0 0 24 24"
-    fill="currentColor"
-    stroke="none"
-    {...props}
-  >
-    <path d="M19.5 2h-15A2.5 2.5 0 0 0 2 4.5v15A2.5 2.5 0 0 0 4.5 22h15a2.5 2.5 0 0 0 2.5-2.5v-15A2.5 2.5 0 0 0 19.5 2zM9 18H7v-2h2v2zm0-4H7v-2h2v2zm0-4H7V8h2v2zm4 4h-2v-2h2v2zm0-4h-2V8h2v2zm4 4h-2v-2h2v2zm0-4h-2V8h2v2z"></path>
+  <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" {...props}>
+    <path d="M4 2 h20 l4 4 v22 a2 2 0 0 1 -2 2 H6 a2 2 0 0 1 -2 -2 Z" fill="#F5F5F5"/>
+    <path d="M24 2 L28 6 H22 V2 Z" fill="#E0E0E0"/>
+    <rect x="8" y="12" width="16" height="2" fill="#C1C1C1"/>
+    <rect x="8" y="16" width="16" height="2" fill="#C1C1C1"/>
+    <rect x="8" y="20" width="10" height="2" fill="#C1C1C1"/>
   </svg>
 );
 

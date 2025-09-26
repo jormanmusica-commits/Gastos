@@ -17,6 +17,7 @@ import ShoppingCartIcon from './icons/ShoppingCartIcon';
 import SubscriptionIcon from './icons/SubscriptionIcon';
 import TravelIcon from './icons/TravelIcon';
 import ScaleIcon from './icons/ScaleIcon';
+import BeautyIcon from './icons/BeautyIcon';
 
 interface CategoryIconProps {
   iconName: string;
@@ -25,7 +26,10 @@ interface CategoryIconProps {
 }
 
 const CategoryIcon: React.FC<CategoryIconProps> = ({ iconName, color, className = "w-5 h-5" }) => {
-  const iconProps = { className, style: { color } };
+  // The user wants multi-color emoji-like icons.
+  // The color will be embedded in the SVG files themselves.
+  // The 'color' prop is no longer used to style the icon, so we remove it from iconProps.
+  const iconProps = { className };
   
   if (iconName === 'ColombiaFlag') return <ColombiaFlagIcon className={className} />;
 
@@ -46,6 +50,7 @@ const CategoryIcon: React.FC<CategoryIconProps> = ({ iconName, color, className 
     case 'ShoppingCart': return <ShoppingCartIcon {...iconProps} />;
     case 'Subscription': return <SubscriptionIcon {...iconProps} />;
     case 'Travel': return <TravelIcon {...iconProps} />;
+    case 'Beauty': return <BeautyIcon {...iconProps} />;
     case 'Tag':
     default:
       return <TagIcon {...iconProps} />;

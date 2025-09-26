@@ -20,7 +20,7 @@ interface CategoryModalProps {
 const iconOptions = [
     'Food', 'ShoppingCart', 'Transport', 'Travel', 'House', 'Bill', 'Clothing', 
     'Entertainment', 'Health', 'Education', 'Pet', 'Gift', 'Subscription', 
-    'MoneyBag', 'ArrowDown', 'ColombiaFlag', 'Tag'
+    'MoneyBag', 'ArrowDown', 'ColombiaFlag', 'Tag', 'Beauty'
 ];
 const colorOptions = [
   '#ef4444', '#f87171', '#f97316', '#fb923c',
