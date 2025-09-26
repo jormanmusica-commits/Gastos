@@ -38,15 +38,15 @@ import SwitchIcon from './components/icons/SwitchIcon';
 const CASH_METHOD_ID = 'efectivo';
 
 const defaultCategories: Category[] = [
-  { id: '1', name: 'Comida', icon: '🍔', color: '#008f39' },
-  { id: '2', name: 'Transporte', icon: '🚗', color: '#3b82f6' },
-  { id: '3', name: 'Ropa', icon: '👕', color: '#ec4899' },
-  { id: '4', name: 'Hogar', icon: '🏠', color: '#f97316' },
-  { id: '5', name: 'Entretenimiento', icon: '🎬', color: '#8b5cf6' },
-  { id: '6', name: 'Salud', icon: '❤️‍🩹', color: '#ef4444' },
-  { id: '8', name: 'Ahorro', icon: '💰', color: '#14b8a6' },
-  { id: '9', name: 'Préstamos', icon: '🏦', color: '#3b82f6' },
-  { id: '7', name: 'General', icon: '🧾', color: '#ef4444' },
+  { id: '1', name: 'Comida', icon: '🍔' },
+  { id: '2', name: 'Transporte', icon: '🚗' },
+  { id: '3', name: 'Ropa', icon: '👕' },
+  { id: '4', name: 'Hogar', icon: '🏠' },
+  { id: '5', name: 'Entretenimiento', icon: '🎬' },
+  { id: '6', name: 'Salud', icon: '❤️‍🩹' },
+  { id: '8', name: 'Ahorro', icon: '💰' },
+  { id: '9', name: 'Préstamos', icon: '🏦' },
+  { id: '7', name: 'General', icon: '🧾' },
 ];
 
 const defaultBankAccounts: BankAccount[] = [
@@ -544,13 +544,13 @@ const App: React.FC = () => {
     }));
   }, [activeProfile, updateActiveProfileData]);
 
-  const handleAddCategory = useCallback((name: string, icon: string, color: string) => {
-    const newCategory: Category = { id: crypto.randomUUID(), name, icon, color };
+  const handleAddCategory = useCallback((name: string, icon: string) => {
+    const newCategory: Category = { id: crypto.randomUUID(), name, icon };
     updateActiveProfileData(data => ({ ...data, categories: [...data.categories, newCategory] }));
   }, [updateActiveProfileData]);
 
-  const handleUpdateCategory = useCallback((id: string, name: string, icon: string, color: string) => {
-    updateActiveProfileData(data => ({ ...data, categories: data.categories.map(cat => cat.id === id ? { ...cat, name, icon, color } : cat) }));
+  const handleUpdateCategory = useCallback((id: string, name: string, icon: string) => {
+    updateActiveProfileData(data => ({ ...data, categories: data.categories.map(cat => cat.id === id ? { ...cat, name, icon } : cat) }));
   }, [updateActiveProfileData]);
 
   const handleDeleteCategory = useCallback((id: string) => {

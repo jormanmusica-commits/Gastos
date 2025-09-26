@@ -14,8 +14,8 @@ interface SpendSavingsModalProps {
   savingsBySource: Record<string, { total: number; name: string; color: string; }>;
   currency: string;
   categories: Category[];
-  onAddCategory: (name: string, icon: string, color: string) => void;
-  onUpdateCategory: (id: string, name: string, icon: string, color: string) => void;
+  onAddCategory: (name: string, icon: string) => void;
+  onUpdateCategory: (id: string, name: string, icon: string) => void;
   onDeleteCategory: (id: string) => void;
 }
 
@@ -194,8 +194,8 @@ const SpendSavingsModal: React.FC<SpendSavingsModalProps> = ({
                   >
                     {selectedCategory ? (
                       <span className="flex items-center gap-3">
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 border-red-500/50`} style={{ backgroundColor: `${selectedCategory.color}20`}}>
-                            <CategoryIcon iconName={selectedCategory.icon} color={selectedCategory.color} />
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 border-red-500/50 bg-gray-200 dark:bg-gray-700`}>
+                            <CategoryIcon iconName={selectedCategory.icon} className="text-xl" />
                         </div>
                         <span>{selectedCategory.name}</span>
                       </span>

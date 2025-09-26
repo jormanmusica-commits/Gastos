@@ -145,7 +145,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
               >
                 {selectedCategory ? (
                   <span className="flex items-center gap-3">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${!isIncome ? 'border-2 border-red-500/50' : ''}`} style={{ backgroundColor: `${selectedCategory.color}20`}}>
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${!isIncome ? 'border-2 border-red-500/50' : ''} bg-gray-200 dark:bg-gray-700`}>
                         <CategoryIcon iconName={selectedCategory.icon} className="text-xl" />
                     </div>
                     <span>{selectedCategory.name}</span>

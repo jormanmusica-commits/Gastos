@@ -196,11 +196,11 @@ const FilterPanel: React.FC<FilterPanelProps> = ({ onApply, currentFilters, bank
                                 checked={localFilters.categories.includes(cat.id)}
                                 onChange={() => handleToggle('categories', cat.id)}
                                 className="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                                style={{ accentColor: cat.color }}
+                                style={{ accentColor: '#3b82f6' }}
                                 disabled={isCategoryFilterDisabled}
                             />
                             <div className="flex items-center gap-2">
-                                <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: `${cat.color}20` }}>
+                                <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-gray-200 dark:bg-gray-700">
                                     <CategoryIcon iconName={cat.icon} className="text-xl" />
                                 </div>
                                 <span className="font-medium">{cat.name}</span>

@@ -51,10 +51,10 @@ const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({ isOpen,
         const isLoan = transaction.patrimonioType === 'loan';
 
         if (isTransfer) return { title: 'Detalle de Transferencia', icon: <SwitchIcon className="w-8 h-8 text-blue-500" />, colorClass: 'text-blue-500', sign: '' };
-        if (isSaving) return { title: 'Detalle de Ahorro', icon: <CategoryIcon iconName="Tag" color="#14b8a6" className="w-8 h-8" />, colorClass: 'text-teal-500', sign: '-' };
+        if (isSaving && category) return { title: 'Detalle de Ahorro', icon: <CategoryIcon iconName={category.icon} className="w-8 h-8" />, colorClass: 'text-teal-500', sign: '-' };
         if (isLoan) return { title: 'Detalle de Préstamo', icon: <ScaleIcon className="w-8 h-8 text-blue-500" />, colorClass: 'text-blue-500', sign: '-' };
         if (isIncome) return { title: 'Detalle de Ingreso', icon: <ArrowUpIcon className="w-8 h-8 text-green-500" />, colorClass: 'text-green-500', sign: '+' };
-        return { title: 'Detalle de Gasto', icon: category ? <CategoryIcon iconName={category.icon} color={category.color} className="w-8 h-8" /> : <ArrowDownIcon className="w-8 h-8 text-red-500" />, colorClass: 'text-red-500', sign: '-' };
+        return { title: 'Detalle de Gasto', icon: category ? <CategoryIcon iconName={category.icon} className="w-8 h-8" /> : <ArrowDownIcon className="w-8 h-8 text-red-500" />, colorClass: 'text-red-500', sign: '-' };
     }, [transaction, category]);
 
     return (
@@ -71,7 +71,7 @@ const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({ isOpen,
             >
                 <header className="flex items-start justify-between p-4 border-b border-gray-200 dark:border-gray-700">
                     <div className="flex items-center space-x-4">
-                        <div className="flex-shrink-0 w-14 h-14 flex items-center justify-center">
+                        <div className="flex-shrink-0 w-14 h-14 flex items-center justify-center bg-gray-200 dark:bg-gray-700 rounded-full">
                             {icon}
                         </div>
                         <div>
@@ -96,7 +96,7 @@ const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({ isOpen,
                     {category && !transaction.transferId && (
                          <DetailRow label="Categoría">
                             <div className="flex items-center gap-2">
-                                <CategoryIcon iconName={category.icon} color={category.color} />
+                                <CategoryIcon iconName={category.icon} className="text-xl" />
                                 <span>{category.name}</span>
                             </div>
                         </DetailRow>

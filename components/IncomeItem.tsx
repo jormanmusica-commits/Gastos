@@ -101,7 +101,7 @@ const TransactionItem: React.FC<TransactionItemProps> = ({
                 <ArrowUpIcon className="w-5 h-5 text-[#008f39]" />
             </div>
         ) : category ? (
-          <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${!isIncome ? expenseIconBorderClass : ''}`} style={{ backgroundColor: `${category.color}20` }}>
+          <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${!isIncome ? expenseIconBorderClass : ''} bg-gray-200 dark:bg-gray-700`}>
             <CategoryIcon iconName={category.icon} className="text-2xl" />
           </div>
         ) : null}

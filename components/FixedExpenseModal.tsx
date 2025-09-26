@@ -19,8 +19,8 @@ interface FixedExpenseModalProps {
   onDeleteFixedExpense?: (id: string) => void;
   onSelectFixedExpense?: (expense: FixedExpense) => void;
   currency: string;
-  onAddCategory?: (name: string, icon: string, color: string) => void;
-  onUpdateCategory?: (id: string, name: string, icon: string, color: string) => void;
+  onAddCategory?: (name: string, icon: string) => void;
+  onUpdateCategory?: (id: string, name: string, icon: string) => void;
   onDeleteCategory?: (id: string) => void;
   onOpenGiftModal?: (expense: FixedExpense) => void;
   mode?: 'manage' | 'select';
@@ -168,7 +168,7 @@ const FixedExpenseModal: React.FC<FixedExpenseModalProps> = ({
                   <>
                     <div className="flex items-center space-x-4">
                       {category ? (
-                        <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: `${category.color}20` }}>
+                        <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 bg-gray-200 dark:bg-gray-700">
                             <CategoryIcon iconName={category.icon} className="text-2xl" />
                         </div>
                       ) : (
@@ -267,7 +267,7 @@ const FixedExpenseModal: React.FC<FixedExpenseModalProps> = ({
                   >
                     {selectedCategory ? (
                         <span className="flex items-center gap-3">
-                            <div className={`w-8 h-8 rounded-full flex items-center justify-center`} style={{ backgroundColor: `${selectedCategory.color}20`}}>
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center bg-gray-200 dark:bg-gray-700`}>
                                 <CategoryIcon iconName={selectedCategory.icon} className="text-xl" />
                             </div>
                             <span className="dark:text-gray-100">{selectedCategory.name}</span>

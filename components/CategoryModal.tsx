@@ -12,55 +12,29 @@ interface CategoryModalProps {
   onClose: () => void;
   categories: Category[];
   onSelectCategory?: (category: Category) => void;
-  onAddCategory: (name: string, icon: string, color: string) => void;
-  onUpdateCategory: (id: string, name: string, icon: string, color: string) => void;
+  onAddCategory: (name: string, icon: string) => void;
+  onUpdateCategory: (id: string, name: string, icon: string) => void;
   onDeleteCategory: (id: string) => void;
 }
-
-const colorOptions = [
-  '#ef4444', '#f87171', '#f97316', '#fb923c',
-  '#eab308', '#facc15', '#22c55e', '#4ade80',
-  '#16a34a', '#008f39', '#14b8a6', '#2dd4bf',
-  '#3b82f6', '#60a5fa', '#6366f1', '#818cf8',
-  '#8b5cf6', '#a78bfa', '#ec4899', '#f472b6',
-  '#d946ef', '#e879f9', '#64748b', '#94a3b8',
-];
-
-const ColorPicker: React.FC<{selectedColor: string, onSelect: (color: string) => void}> = ({ selectedColor, onSelect }) => (
-    <div className="grid grid-cols-8 gap-2 my-2">
-      {colorOptions.map(color => (
-        <button
-          key={color}
-          type="button"
-          onClick={() => onSelect(color)}
-          className="w-full aspect-square rounded-lg transition-transform duration-150 transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-gray-900 focus:ring-white flex items-center justify-center"
-          style={{ backgroundColor: color }}
-          aria-label={`Select color ${color}`}
-        >
-          {selectedColor === color && <CheckIcon className="w-5 h-5 text-white drop-shadow-md" />}
-        </button>
-      ))}
-    </div>
-);
 
 const CategoryModal: React.FC<CategoryModalProps> = ({ 
     isOpen, onClose, categories, onSelectCategory, onAddCategory, onUpdateCategory, onDeleteCategory 
 }) => {
-  const [newCategory, setNewCategory] = useState({ name: '', icon: '🏷️', color: colorOptions[22] });
-  const [editingCategory, setEditingCategory] = useState<{id: string, name: string, icon: string, color: string} | null>(null);
+  const [newCategory, setNewCategory] = useState({ name: '', icon: '🏷️' });
+  const [editingCategory, setEditingCategory] = useState<{id: string, name: string, icon: string} | null>(null);
 
   if (!isOpen) return null;
 
   const handleAdd = () => {
     if (newCategory.name.trim()) {
-      onAddCategory(newCategory.name.trim(), newCategory.icon, newCategory.color);
-      setNewCategory({ name: '', icon: '🏷️', color: colorOptions[22] });
+      onAddCategory(newCategory.name.trim(), newCategory.icon);
+      setNewCategory({ name: '', icon: '🏷️' });
     }
   };
 
   const handleUpdate = () => {
     if (editingCategory && editingCategory.name.trim()) {
-      onUpdateCategory(editingCategory.id, editingCategory.name.trim(), editingCategory.icon, editingCategory.color);
+      onUpdateCategory(editingCategory.id, editingCategory.name.trim(), editingCategory.icon);
       setEditingCategory(null);
     }
   };
@@ -98,6 +72,16 @@ const CategoryModal: React.FC<CategoryModalProps> = ({
                   <div className="flex items-center space-x-2">
                     <input
                       type="text"
+                      value={editingCategory.icon}
+                      placeholder="😀"
+                      onChange={(e) => {
+                          const lastChar = [...e.target.value].pop() || '🏷️';
+                          setEditingCategory({ ...editingCategory, icon: lastChar });
+                      }}
+                      className="w-20 text-4xl p-2 text-center border border-gray-300 dark:border-gray-600 rounded-md bg-transparent text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    />
+                    <input
+                      type="text"
                       value={editingCategory.name}
                       onChange={(e) => setEditingCategory({ ...editingCategory, name: e.target.value })}
                       className="w-full px-2 py-1 border border-[#008f39] rounded-md bg-transparent text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-[#008f39]"
@@ -107,26 +91,6 @@ const CategoryModal: React.FC<CategoryModalProps> = ({
                       <CheckIcon className="w-6 h-6" />
                     </button>
                   </div>
-                   <div>
-                        <h4 className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-1">Icono (Emoji)</h4>
-                        <input
-                            type="text"
-                            value={editingCategory.icon}
-                            onChange={(e) => {
-                                const lastChar = [...e.target.value].pop() || '🏷️';
-                                setEditingCategory({ ...editingCategory, icon: lastChar });
-                            }}
-                            className="w-full text-4xl p-2 text-center border border-gray-300 dark:border-gray-600 rounded-md bg-transparent text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                            maxLength={2}
-                        />
-                   </div>
-                   <div>
-                        <h4 className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-1">Color</h4>
-                        <ColorPicker 
-                            selectedColor={editingCategory.color}
-                            onSelect={(color) => setEditingCategory({...editingCategory, color})}
-                        />
-                   </div>
                 </div>
               ) : (
                 <div className="flex items-center justify-between">
@@ -136,13 +100,13 @@ const CategoryModal: React.FC<CategoryModalProps> = ({
                       className="flex-grow flex items-center space-x-4 text-left p-2"
                       disabled={!onSelectCategory}
                     >
-                      <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ backgroundColor: `${cat.color}20` }}>
+                      <div className="w-10 h-10 rounded-full flex items-center justify-center bg-gray-200 dark:bg-gray-700">
                         <CategoryIcon iconName={cat.icon} className="text-2xl" />
                       </div>
                       <span className="text-gray-800 dark:text-gray-100">{cat.name}</span>
                     </button>
                     <div className="flex items-center space-x-1">
-                        <button onClick={() => setEditingCategory({ id: cat.id, name: cat.name, icon: cat.icon, color: cat.color })} className="p-2 text-gray-400 hover:text-blue-500 transition-colors">
+                        <button onClick={() => setEditingCategory({ id: cat.id, name: cat.name, icon: cat.icon })} className="p-2 text-gray-400 hover:text-blue-500 transition-colors">
                         <EditIcon className="w-5 h-5" />
                         </button>
                         <button onClick={() => handleDelete(cat.id)} className="p-2 text-gray-400 hover:text-red-500 transition-colors">
@@ -156,13 +120,23 @@ const CategoryModal: React.FC<CategoryModalProps> = ({
         </div>
 
         <footer className="p-4 border-t border-gray-200 dark:border-gray-700 mt-auto space-y-3">
-          <div>
+            <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300">Añadir Nueva Categoría</h3>
             <div className="flex space-x-2">
+                <input
+                    type="text"
+                    value={newCategory.icon}
+                    placeholder="😀"
+                    onChange={(e) => {
+                        const lastChar = [...e.target.value].pop() || '🏷️';
+                        setNewCategory({ ...newCategory, icon: lastChar });
+                    }}
+                    className="w-20 text-4xl p-2 text-center border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                />
                 <input
                 type="text"
                 value={newCategory.name}
                 onChange={(e) => setNewCategory({...newCategory, name: e.target.value})}
-                placeholder="Nueva categoría..."
+                placeholder="Nombre de la categoría..."
                 className="flex-grow w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-[#008f39] focus:border-[#008f39] bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                 />
                 <button
@@ -173,27 +147,6 @@ const CategoryModal: React.FC<CategoryModalProps> = ({
                 <PlusIcon className="w-6 h-6" />
                 </button>
             </div>
-          </div>
-          <div>
-            <h4 className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-1">Icono (Emoji)</h4>
-            <input
-                type="text"
-                value={newCategory.icon}
-                onChange={(e) => {
-                    const lastChar = [...e.target.value].pop() || '🏷️';
-                    setNewCategory({ ...newCategory, icon: lastChar });
-                }}
-                className="w-full text-4xl p-2 text-center border border-gray-300 dark:border-gray-600 rounded-md bg-transparent text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                maxLength={2}
-            />
-          </div>
-          <div>
-            <h4 className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-1">Color</h4>
-            <ColorPicker 
-                selectedColor={newCategory.color}
-                onSelect={(color) => setNewCategory({...newCategory, color})}
-            />
-          </div>
         </footer>
       </div>
     </div>
