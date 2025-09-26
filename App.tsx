@@ -386,12 +386,12 @@ const App: React.FC = () => {
     }
   }, [profiles]);
 
-  const updateActiveProfileData = (updater: (data: ProfileData) => ProfileData) => {
+  const updateActiveProfileData = useCallback((updater: (data: ProfileData) => ProfileData) => {
     if (!activeProfileId) return;
     setProfiles(prevProfiles => prevProfiles.map(p => 
         p.id === activeProfileId ? { ...p, data: updater(p.data) } : p
     ));
-  };
+  }, [activeProfileId]);
 
   const handleToggleTheme = useCallback(() => {
     setTheme(prevTheme => prevTheme === Theme.LIGHT ? Theme.DARK : Theme.LIGHT);
@@ -438,7 +438,7 @@ const App: React.FC = () => {
     }
     
     updateActiveProfileData(data => ({ ...data, transactions: updatedTransactions }));
-  }, [activeProfile]);
+  }, [activeProfile, updateActiveProfileData]);
   
   const handleAddTransfer = useCallback((fromMethodId: string, toMethodId: string, amount: number, date: string): string | void => {
     if (!activeProfile) return "No active profile found.";
@@ -463,7 +463,7 @@ const App: React.FC = () => {
     setIsTransferModalOpen(false);
     setInitialTransferFromId(null);
     setCurrentPage('resumen');
-}, [activeProfile]);
+}, [activeProfile, updateActiveProfileData]);
 
   const handleDeleteTransaction = useCallback((id: string) => {
     if (!activeProfile) return;
@@ -542,16 +542,16 @@ const App: React.FC = () => {
         loans: updatedLoans,
         liabilities: updatedLiabilities,
     }));
-  }, [activeProfile]);
+  }, [activeProfile, updateActiveProfileData]);
 
   const handleAddCategory = useCallback((name: string) => {
     const newCategory: Category = { id: crypto.randomUUID(), name, icon: 'Tag', color: '#64748b' };
     updateActiveProfileData(data => ({ ...data, categories: [...data.categories, newCategory] }));
-  }, []);
+  }, [updateActiveProfileData, activeProfileId]);
 
   const handleUpdateCategory = useCallback((id: string, name: string) => {
     updateActiveProfileData(data => ({ ...data, categories: data.categories.map(cat => cat.id === id ? { ...cat, name } : cat) }));
-  }, []);
+  }, [updateActiveProfileData, activeProfileId]);
 
   const handleDeleteCategory = useCallback((id: string) => {
     if (!activeProfile) return;
@@ -560,16 +560,16 @@ const App: React.FC = () => {
       return;
     }
     updateActiveProfileData(data => ({ ...data, categories: data.categories.filter(cat => cat.id !== id) }));
-  }, [activeProfile]);
+  }, [activeProfile, updateActiveProfileData]);
 
   const handleAddBankAccount = useCallback((name: string, color: string) => {
     const newBankAccount: BankAccount = { id: crypto.randomUUID(), name, color };
     updateActiveProfileData(data => ({ ...data, bankAccounts: [...data.bankAccounts, newBankAccount] }));
-  }, []);
+  }, [updateActiveProfileData, activeProfileId]);
 
   const handleUpdateBankAccount = useCallback((id: string, name: string, color: string) => {
     updateActiveProfileData(data => ({ ...data, bankAccounts: data.bankAccounts.map(acc => acc.id === id ? { ...acc, name, color } : acc) }));
-  }, []);
+  }, [updateActiveProfileData, activeProfileId]);
 
   const handleDeleteBankAccount = useCallback((id: string) => {
     if (!activeProfile) return;
@@ -578,16 +578,16 @@ const App: React.FC = () => {
       return;
     }
     updateActiveProfileData(data => ({ ...data, bankAccounts: data.bankAccounts.filter(acc => acc.id !== id) }));
-  }, [activeProfile]);
+  }, [activeProfile, updateActiveProfileData]);
 
   const handleAddFixedExpense = useCallback((name: string, amount: number, categoryId?: string) => {
     const newFixedExpense: FixedExpense = { id: crypto.randomUUID(), name, amount, categoryId };
-    updateActiveProfileData(data => ({ ...data, fixedExpenses: [...data.fixedExpenses, newFixedExpense] }));
-  }, []);
+    updateActiveProfileData(data => ({ ...data, fixedExpenses: [...(data.fixedExpenses || []), newFixedExpense] }));
+  }, [updateActiveProfileData, activeProfileId]);
 
   const handleDeleteFixedExpense = useCallback((id: string) => {
     updateActiveProfileData(data => ({ ...data, fixedExpenses: data.fixedExpenses.filter(expense => expense.id !== id) }));
-  }, []);
+  }, [updateActiveProfileData, activeProfileId]);
 
   const handleConfirmFixedExpenseAsGift = useCallback((expenseId: string, date: string, details: string) => {
     if (!activeProfile) return;
@@ -612,7 +612,7 @@ const App: React.FC = () => {
     // No validation needed as gift transactions don't affect balance.
     updateActiveProfileData(data => ({ ...data, transactions: updatedTransactions }));
     setGiftingFixedExpense(null); // Close modal
-  }, [activeProfile]);
+  }, [activeProfile, updateActiveProfileData]);
 
   // FIX: Moved useMemo for balances before its use in handleCreateSaving
   const { balance, balancesByMethod } = useMemo(() => {
@@ -676,7 +676,7 @@ const App: React.FC = () => {
     }));
 
     setIsAssetLiabilityModalOpen(false);
-  }, [activeProfile, balancesByMethod]);
+  }, [activeProfile, balancesByMethod, updateActiveProfileData]);
 
   const handleSpendFromSavings = useCallback((amountToSpend: number, description: string, date: string, categoryId: string | undefined, sourceMethodId: string) => {
     if (!activeProfile) return;
@@ -754,7 +754,7 @@ const App: React.FC = () => {
     }));
 
     setIsSpendSavingsModalOpen(false);
-  }, [activeProfile]);
+  }, [activeProfile, updateActiveProfileData]);
 
   const handleSaveLiability = useCallback((name: string, details: string, amount: number, destinationMethodId: string, date: string, isInitial: boolean) => {
     if (!activeProfile) return;
@@ -800,7 +800,7 @@ const App: React.FC = () => {
 
     setIsAssetLiabilityModalOpen(false);
     setModalConfig(null);
-  }, [activeProfile]);
+  }, [activeProfile, updateActiveProfileData]);
 
   const handleSaveLoan = useCallback((name: string, amount: number, sourceMethodId: string, date: string, isInitial: boolean, details: string) => {
     if (!activeProfile) return;
@@ -843,7 +843,7 @@ const App: React.FC = () => {
     }));
     setIsAssetLiabilityModalOpen(false);
     setModalConfig(null);
-  }, [activeProfile]);
+  }, [activeProfile, updateActiveProfileData]);
 
     const handleAddProfile = useCallback((name: string, countryCode: string, currency: string) => {
     const newProfile: Profile = {
@@ -1093,7 +1093,7 @@ const App: React.FC = () => {
 
         updateActiveProfileData(data => ({ ...data, liabilities: updatedLiabilities, transactions: updatedTransactions }));
         setPayingDebt(null);
-    }, [activeProfile]);
+    }, [activeProfile, updateActiveProfileData]);
 
     const handleReceiveLoanPayments = useCallback((payments: { loanId: string, amount: number }[], paymentMethodId: string, date: string) => {
         if (!activeProfile) return;
@@ -1127,7 +1127,7 @@ const App: React.FC = () => {
 
         updateActiveProfileData(data => ({ ...data, loans: updatedLoans, transactions: updatedTransactions }));
         setRepayingLoan(null);
-    }, [activeProfile]);
+    }, [activeProfile, updateActiveProfileData]);
 
     const handleAddValueToLoan = useCallback((loanId: string, amount: number, sourceMethodId: string, date: string, isInitial: boolean, details: string) => {
         if (!activeProfile) return;
@@ -1168,7 +1168,7 @@ const App: React.FC = () => {
 
         updateActiveProfileData(data => ({ ...data, loans: updatedLoans, transactions: updatedTransactions }));
         setAddingValueToLoan(null);
-    }, [activeProfile]);
+    }, [activeProfile, updateActiveProfileData]);
 
     const handleUpdateLoan = useCallback((loanId: string, name: string, details: string, newOriginalAmountStr: string) => {
         updateActiveProfileData(data => {
@@ -1189,7 +1189,7 @@ const App: React.FC = () => {
             return { ...data, loans: updatedLoans };
         });
         setEditingLoan(null);
-    }, []);
+    }, [updateActiveProfileData]);
     
     const handleUpdateLoanAddition = useCallback((loanId: string, additionId: string, newAmount: number, newDetails: string) => {
         updateActiveProfileData(data => {
@@ -1215,7 +1215,7 @@ const App: React.FC = () => {
             return { ...data, loans: updatedLoans };
         });
         setEditingLoanAddition(null);
-    }, []);
+    }, [updateActiveProfileData]);
 
     const handleAddValueToDebt = useCallback((debtId: string, amount: number, destinationMethodId: string, date: string, isInitial: boolean, details: string) => {
         if (!activeProfile) return;
@@ -1256,7 +1256,7 @@ const App: React.FC = () => {
 
         updateActiveProfileData(data => ({ ...data, liabilities: updatedLiabilities, transactions: updatedTransactions }));
         setAddingValueToDebt(null);
-    }, [activeProfile]);
+    }, [activeProfile, updateActiveProfileData]);
     
     const handleUpdateDebt = useCallback((debtId: string, name: string, details: string, newOriginalAmountStr: string) => {
         updateActiveProfileData(data => {
@@ -1277,7 +1277,7 @@ const App: React.FC = () => {
             return { ...data, liabilities: updatedLiabilities };
         });
         setEditingDebt(null);
-    }, []);
+    }, [updateActiveProfileData]);
     
     const handleUpdateDebtAddition = useCallback((debtId: string, additionId: string, newAmount: number, newDetails: string) => {
         updateActiveProfileData(data => {
@@ -1303,7 +1303,7 @@ const App: React.FC = () => {
             return { ...data, liabilities: updatedLiabilities };
         });
         setEditingDebtAddition(null);
-    }, []);
+    }, [updateActiveProfileData]);
 
     const handleAhorroClick = useCallback(() => { setModalConfig({ type: 'asset' }); setIsAssetLiabilityModalOpen(true); }, []);
     const handleDeudaClick = useCallback(() => { setModalConfig({ type: 'liability' }); setIsAssetLiabilityModalOpen(true); }, []);

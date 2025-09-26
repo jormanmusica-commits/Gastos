@@ -159,7 +159,7 @@ const FixedExpenseModal: React.FC<FixedExpenseModalProps> = ({
                         </div>
                       )}
                       <div>
-                        <span className={`font-semibold text-gray-800 dark:text-gray-200 transition-colors ${isPaid ? 'line-through' : ''}`}>{exp.name}</span>
+                        <span className={`font-semibold text-gray-800 dark:text-gray-100 transition-colors ${isPaid ? 'line-through' : ''}`}>{exp.name}</span>
                         {category && <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{category.name}</p>}
                       </div>
                     </div>
@@ -169,7 +169,7 @@ const FixedExpenseModal: React.FC<FixedExpenseModalProps> = ({
                                 <CheckIcon className="w-5 h-5 text-green-500" />
                             </span>
                         )}
-                        <span className={`font-mono transition-colors ${isPaid ? 'line-through' : ''}`}>{formatCurrency(exp.amount)}</span>
+                        <span className={`font-mono transition-colors text-gray-700 dark:text-gray-200 ${isPaid ? 'line-through' : ''}`}>{formatCurrency(exp.amount)}</span>
                     </div>
                   </>
                 );
@@ -225,7 +225,7 @@ const FixedExpenseModal: React.FC<FixedExpenseModalProps> = ({
                     value={newExpense.name}
                     onChange={(e) => setNewExpense({...newExpense, name: e.target.value})}
                     placeholder="Nombre (ej. Alquiler)"
-                    className="sm:col-span-2 w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-[#008f39] focus:border-[#008f39] bg-gray-50 dark:bg-gray-700"
+                    className="sm:col-span-2 w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-[#008f39] focus:border-[#008f39] bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 dark:placeholder-gray-400"
                   />
                   <input
                     type="text"
@@ -234,7 +234,7 @@ const FixedExpenseModal: React.FC<FixedExpenseModalProps> = ({
                     placeholder="Monto"
                     pattern="[0-9]+([,\.][0-9]{1,2})?"
                     inputMode="decimal"
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-[#008f39] focus:border-[#008f39] bg-gray-50 dark:bg-gray-700"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-[#008f39] focus:border-[#008f39] bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 dark:placeholder-gray-400"
                   />
                 </div>
                 <div>
@@ -248,10 +248,10 @@ const FixedExpenseModal: React.FC<FixedExpenseModalProps> = ({
                             <div className={`w-8 h-8 rounded-full flex items-center justify-center`} style={{ backgroundColor: `${selectedCategory.color}20`}}>
                                 <CategoryIcon iconName={selectedCategory.icon} color={selectedCategory.color} />
                             </div>
-                            <span>{selectedCategory.name}</span>
+                            <span className="dark:text-gray-100">{selectedCategory.name}</span>
                         </span>
                     ) : (
-                        <span className="text-gray-400">Seleccionar categoría (opcional)</span>
+                        <span className="text-gray-500 dark:text-gray-400">Seleccionar categoría (opcional)</span>
                     )}
                   </button>
                 </div>
