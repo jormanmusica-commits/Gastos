@@ -13,8 +13,8 @@ interface AjustesProps {
   theme: Theme;
   onToggleTheme: () => void;
   categories: Category[];
-  onAddCategory: (name: string) => void;
-  onUpdateCategory: (id: string, name: string) => void;
+  onAddCategory: (name: string, icon: string, color: string) => void;
+  onUpdateCategory: (id: string, name: string, icon: string, color: string) => void;
   onDeleteCategory: (id: string) => void;
   bankAccounts: BankAccount[];
   onAddBankAccount: (name: string, color: string) => void;

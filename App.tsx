@@ -45,7 +45,7 @@ const defaultCategories: Category[] = [
   { id: '5', name: 'Entretenimiento', icon: 'Entertainment', color: '#8b5cf6' },
   { id: '6', name: 'Salud', icon: 'Health', color: '#ef4444' },
   { id: '8', name: 'Ahorro', icon: 'Tag', color: '#14b8a6' },
-  { id: '9', name: 'Préstamos', icon: 'Scale', color: '#3b82f6' },
+  { id: '9', name: 'Préstamos', icon: 'MoneyBag', color: '#3b82f6' },
   { id: '7', name: 'General', icon: 'ArrowDown', color: '#ef4444' },
 ];
 
@@ -544,14 +544,14 @@ const App: React.FC = () => {
     }));
   }, [activeProfile, updateActiveProfileData]);
 
-  const handleAddCategory = useCallback((name: string) => {
-    const newCategory: Category = { id: crypto.randomUUID(), name, icon: 'Tag', color: '#64748b' };
+  const handleAddCategory = useCallback((name: string, icon: string, color: string) => {
+    const newCategory: Category = { id: crypto.randomUUID(), name, icon, color };
     updateActiveProfileData(data => ({ ...data, categories: [...data.categories, newCategory] }));
-  }, [updateActiveProfileData, activeProfileId]);
+  }, [updateActiveProfileData]);
 
-  const handleUpdateCategory = useCallback((id: string, name: string) => {
-    updateActiveProfileData(data => ({ ...data, categories: data.categories.map(cat => cat.id === id ? { ...cat, name } : cat) }));
-  }, [updateActiveProfileData, activeProfileId]);
+  const handleUpdateCategory = useCallback((id: string, name: string, icon: string, color: string) => {
+    updateActiveProfileData(data => ({ ...data, categories: data.categories.map(cat => cat.id === id ? { ...cat, name, icon, color } : cat) }));
+  }, [updateActiveProfileData]);
 
   const handleDeleteCategory = useCallback((id: string) => {
     if (!activeProfile) return;

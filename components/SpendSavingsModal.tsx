@@ -4,15 +4,8 @@ import CloseIcon from './icons/CloseIcon';
 import AmountInput from './AmountInput';
 import CustomDatePicker from './CustomDatePicker';
 import CategoryModal from './CategoryModal';
-import FoodIcon from './icons/FoodIcon';
-import TransportIcon from './icons/TransportIcon';
-import ClothingIcon from './icons/ClothingIcon';
-import HouseIcon from './icons/HouseIcon';
-import EntertainmentIcon from './icons/EntertainmentIcon';
-import HealthIcon from './icons/HealthIcon';
-import TagIcon from './icons/TagIcon';
-import ArrowDownIcon from './icons/ArrowDownIcon';
 import ArrowLeftIcon from './icons/ArrowLeftIcon';
+import CategoryIcon from './CategoryIcon';
 
 interface SpendSavingsModalProps {
   isOpen: boolean;
@@ -21,29 +14,13 @@ interface SpendSavingsModalProps {
   savingsBySource: Record<string, { total: number; name: string; color: string; }>;
   currency: string;
   categories: Category[];
-  onAddCategory: (name: string) => void;
-  onUpdateCategory: (id: string, name: string) => void;
+  onAddCategory: (name: string, icon: string, color: string) => void;
+  onUpdateCategory: (id: string, name: string, icon: string, color: string) => void;
   onDeleteCategory: (id: string) => void;
 }
 
 // FIX: Define an explicit type for savings source data to use in type assertions.
 type SavingsSourceData = { total: number; name: string; color: string; };
-
-const CategoryIcon: React.FC<{ iconName: string; color: string; }> = ({ iconName, color }) => {
-    const iconProps = { className: "w-5 h-5", style: { color } };
-    switch (iconName) {
-      case 'Food': return <FoodIcon {...iconProps} />;
-      case 'Transport': return <TransportIcon {...iconProps} />;
-      case 'Clothing': return <ClothingIcon {...iconProps} />;
-      case 'House': return <HouseIcon {...iconProps} />;
-      case 'Entertainment': return <EntertainmentIcon {...iconProps} />;
-      case 'Health': return <HealthIcon {...iconProps} />;
-      case 'ArrowDown': return <ArrowDownIcon {...iconProps} />;
-      case 'Tag':
-      default:
-        return <TagIcon {...iconProps} />;
-    }
-};
 
 const SpendSavingsModal: React.FC<SpendSavingsModalProps> = ({
   isOpen, onClose, onSpend, savingsBySource, currency, categories,

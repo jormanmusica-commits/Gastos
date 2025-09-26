@@ -1,15 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Filters, TransactionTypeFilter, PaymentMethodFilter, BankAccount, Category } from '../types';
-import FoodIcon from './icons/FoodIcon';
-import TransportIcon from './icons/TransportIcon';
-import ClothingIcon from './icons/ClothingIcon';
-import HouseIcon from './icons/HouseIcon';
-import EntertainmentIcon from './icons/EntertainmentIcon';
-import HealthIcon from './icons/HealthIcon';
-import TagIcon from './icons/TagIcon';
-import ArrowDownIcon from './icons/ArrowDownIcon';
-import ScaleIcon from './icons/ScaleIcon';
 import ChevronDownIcon from './icons/ChevronDownIcon';
+import CategoryIcon from './CategoryIcon';
 
 interface FilterPanelProps {
   onApply: (filters: Omit<Filters, 'searchTerm'>) => void;
@@ -25,23 +17,6 @@ const defaultFilters: Omit<Filters, 'searchTerm'> = {
   methods: [],
   bankAccounts: [],
   categories: [],
-};
-
-const CategoryIcon: React.FC<{ iconName: string; color: string; }> = ({ iconName, color }) => {
-  const iconProps = { className: "w-5 h-5", style: { color } };
-  switch (iconName) {
-    case 'Food': return <FoodIcon {...iconProps} />;
-    case 'Transport': return <TransportIcon {...iconProps} />;
-    case 'Clothing': return <ClothingIcon {...iconProps} />;
-    case 'House': return <HouseIcon {...iconProps} />;
-    case 'Entertainment': return <EntertainmentIcon {...iconProps} />;
-    case 'Health': return <HealthIcon {...iconProps} />;
-    case 'ArrowDown': return <ArrowDownIcon {...iconProps} />;
-    case 'Scale': return <ScaleIcon {...iconProps} />;
-    case 'Tag':
-    default:
-      return <TagIcon {...iconProps} />;
-  }
 };
 
 const FilterPanel: React.FC<FilterPanelProps> = ({ onApply, currentFilters, bankAccounts, categories }) => {

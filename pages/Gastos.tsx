@@ -19,8 +19,8 @@ interface GastosProps {
   balancesByMethod: Record<string, number>;
   onAddTransaction: (description: string, amount: number, date: string, type: 'income' | 'expense', paymentMethodId: string, categoryId?: string) => void;
   onNavigate: (page: Page) => void;
-  onAddCategory: (name: string) => void;
-  onUpdateCategory: (id: string, name: string) => void;
+  onAddCategory: (name: string, icon: string, color: string) => void;
+  onUpdateCategory: (id: string, name: string, icon: string, color: string) => void;
   onDeleteCategory: (id: string) => void;
   onAddBankAccount: (name: string, color: string) => void;
   onUpdateBankAccount: (id: string, name: string, color: string) => void;

@@ -1,36 +1,13 @@
 import React, { useMemo } from 'react';
 import { Transaction, Category, BankAccount } from '../types';
 import CloseIcon from './icons/CloseIcon';
-import FoodIcon from './icons/FoodIcon';
-import TransportIcon from './icons/TransportIcon';
-import ClothingIcon from './icons/ClothingIcon';
-import HouseIcon from './icons/HouseIcon';
-import EntertainmentIcon from './icons/EntertainmentIcon';
-import HealthIcon from './icons/HealthIcon';
-import TagIcon from './icons/TagIcon';
 import SwitchIcon from './icons/SwitchIcon';
 import ArrowUpIcon from './icons/ArrowUpIcon';
 import ArrowDownIcon from './icons/ArrowDownIcon';
 import ScaleIcon from './icons/ScaleIcon';
+import CategoryIcon from './CategoryIcon';
 
 const CASH_METHOD_ID = 'efectivo';
-
-const CategoryIcon: React.FC<{ iconName: string; color: string; }> = ({ iconName, color }) => {
-  const iconProps = { className: "w-6 h-6", style: { color } };
-  switch (iconName) {
-    case 'Food': return <FoodIcon {...iconProps} />;
-    case 'Transport': return <TransportIcon {...iconProps} />;
-    case 'Clothing': return <ClothingIcon {...iconProps} />;
-    case 'House': return <HouseIcon {...iconProps} />;
-    case 'Entertainment': return <EntertainmentIcon {...iconProps} />;
-    case 'Health': return <HealthIcon {...iconProps} />;
-    case 'ArrowDown': return <ArrowDownIcon {...iconProps} />;
-    case 'Scale': return <ScaleIcon {...iconProps} />;
-    case 'Tag':
-    default:
-      return <TagIcon {...iconProps} />;
-  }
-};
 
 interface TransactionDetailModalProps {
   isOpen: boolean;
@@ -74,10 +51,10 @@ const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({ isOpen,
         const isLoan = transaction.patrimonioType === 'loan';
 
         if (isTransfer) return { title: 'Detalle de Transferencia', icon: <SwitchIcon className="w-8 h-8 text-blue-500" />, colorClass: 'text-blue-500', sign: '' };
-        if (isSaving) return { title: 'Detalle de Ahorro', icon: <CategoryIcon iconName="Tag" color="#14b8a6" />, colorClass: 'text-teal-500', sign: '-' };
+        if (isSaving) return { title: 'Detalle de Ahorro', icon: <CategoryIcon iconName="Tag" color="#14b8a6" className="w-8 h-8" />, colorClass: 'text-teal-500', sign: '-' };
         if (isLoan) return { title: 'Detalle de Préstamo', icon: <ScaleIcon className="w-8 h-8 text-blue-500" />, colorClass: 'text-blue-500', sign: '-' };
         if (isIncome) return { title: 'Detalle de Ingreso', icon: <ArrowUpIcon className="w-8 h-8 text-green-500" />, colorClass: 'text-green-500', sign: '+' };
-        return { title: 'Detalle de Gasto', icon: category ? <CategoryIcon iconName={category.icon} color={category.color} /> : <ArrowDownIcon className="w-8 h-8 text-red-500" />, colorClass: 'text-red-500', sign: '-' };
+        return { title: 'Detalle de Gasto', icon: category ? <CategoryIcon iconName={category.icon} color={category.color} className="w-8 h-8" /> : <ArrowDownIcon className="w-8 h-8 text-red-500" />, colorClass: 'text-red-500', sign: '-' };
     }, [transaction, category]);
 
     return (

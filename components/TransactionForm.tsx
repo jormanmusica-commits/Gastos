@@ -1,15 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Category } from '../types';
-import FoodIcon from './icons/FoodIcon';
-import TransportIcon from './icons/TransportIcon';
-import ClothingIcon from './icons/ClothingIcon';
-import HouseIcon from './icons/HouseIcon';
-import EntertainmentIcon from './icons/EntertainmentIcon';
-import HealthIcon from './icons/HealthIcon';
-import TagIcon from './icons/TagIcon';
-import ArrowDownIcon from './icons/ArrowDownIcon';
 import AmountInput from './AmountInput';
 import CustomDatePicker from './CustomDatePicker';
+import CategoryIcon from './CategoryIcon';
 
 interface TransactionFormProps {
   transactionType: 'income' | 'expense';
@@ -20,22 +13,6 @@ interface TransactionFormProps {
   onCategorySelectClick?: () => void;
   minDate?: string;
 }
-
-const CategoryIcon: React.FC<{ iconName: string; color: string; }> = ({ iconName, color }) => {
-    const iconProps = { className: "w-5 h-5", style: { color } };
-    switch (iconName) {
-      case 'Food': return <FoodIcon {...iconProps} />;
-      case 'Transport': return <TransportIcon {...iconProps} />;
-      case 'Clothing': return <ClothingIcon {...iconProps} />;
-      case 'House': return <HouseIcon {...iconProps} />;
-      case 'Entertainment': return <EntertainmentIcon {...iconProps} />;
-      case 'Health': return <HealthIcon {...iconProps} />;
-      case 'ArrowDown': return <ArrowDownIcon {...iconProps} />;
-      case 'Tag':
-      default:
-        return <TagIcon {...iconProps} />;
-    }
-};
 
 const TransactionForm: React.FC<TransactionFormProps> = ({ 
     transactionType, onAddTransaction, categories = [], selectedCategoryId, onCategorySelectClick,
