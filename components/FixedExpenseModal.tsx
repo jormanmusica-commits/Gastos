@@ -82,6 +82,10 @@ const FixedExpenseModal: React.FC<FixedExpenseModalProps> = ({
     return paidNames;
   }, [transactions, isOpen]);
 
+  const totalFixedExpenses = useMemo(() => {
+    return fixedExpenses.reduce((total, expense) => total + expense.amount, 0);
+  }, [fixedExpenses]);
+
   const formatCurrency = (amount: number) => {
     const locale = currency === 'COP' ? 'es-CO' : (currency === 'CLP' ? 'es-CL' : 'es-ES');
     return new Intl.NumberFormat(locale, {
@@ -218,6 +222,10 @@ const FixedExpenseModal: React.FC<FixedExpenseModalProps> = ({
 
           {mode === 'manage' && (
             <footer className="p-4 border-t border-gray-200 dark:border-gray-700 mt-auto">
+              <div className="flex justify-between items-center mb-4 p-3 bg-gray-100 dark:bg-gray-800 rounded-lg">
+                  <span className="text-lg font-semibold text-gray-700 dark:text-gray-200">Total Fijo Mensual</span>
+                  <span className="text-xl font-bold text-red-500">{formatCurrency(totalFixedExpenses)}</span>
+              </div>
               <div className="space-y-3">
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                   <input
