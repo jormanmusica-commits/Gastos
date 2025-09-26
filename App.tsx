@@ -1012,7 +1012,7 @@ const App: React.FC = () => {
   }, [getDefaultFabPosition]);
 
     const { monthlyIncome, monthlyExpenses, monthlyIncomeByBank, monthlyIncomeByCash, monthlyExpensesByBank, monthlyExpensesByCash, totalIncome, totalExpenses, manualAssetsValue, totalLiabilitiesValue, totalLoansValue, savingsBySource } = useMemo(() => {
-    // FIX: The type of `savingsBySource` was being inferred as `Record<string, unknown>`, causing type errors. Explicitly typing the returned object fixes this.
+    // FIX: The type of `savingsBySource` was being inferred as `Record<string, unknown>`, causando type errors. Explicitly typing the returned object fixes this.
     if (!activeProfile) {
         const savingsBySource: Record<string, { total: number, name: string, color: string }> = {};
         return { monthlyIncome: 0, monthlyExpenses: 0, monthlyIncomeByBank: 0, monthlyIncomeByCash: 0, monthlyExpensesByBank: 0, monthlyExpensesByCash: 0, totalIncome: 0, totalExpenses: 0, manualAssetsValue: 0, totalLiabilitiesValue: 0, totalLoansValue: 0, savingsBySource };
@@ -1336,16 +1336,11 @@ const App: React.FC = () => {
 
     const handleGastoClick = useCallback(() => setCurrentPage('gastos'), []);
     const handleIngresoClick = useCallback(() => setCurrentPage('ingresos'), []);
-    const handleTransferenciaClick = useCallback(() => {
-        setInitialTransferFromId(null);
-        setIsTransferModalOpen(true);
-    }, []);
 
     const resumenMenuItems: MenuItem[] = useMemo(() => [
         { label: 'Gasto', icon: <ArrowDownIcon className="w-6 h-6"/>, onClick: handleGastoClick, color: '#ef4444' },
         { label: 'Ingreso', icon: <ArrowUpIcon className="w-6 h-6"/>, onClick: handleIngresoClick, color: '#008f39' },
-        { label: 'Transferencia', icon: <SwitchIcon className="w-6 h-6"/>, onClick: handleTransferenciaClick, color: '#3b82f6' }
-    ], [handleGastoClick, handleIngresoClick, handleTransferenciaClick]);
+    ], [handleGastoClick, handleIngresoClick]);
 
     const handleInitiateTransfer = (fromAccountId: string) => {
         setInitialTransferFromId(fromAccountId);
