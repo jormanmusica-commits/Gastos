@@ -38,15 +38,15 @@ import SwitchIcon from './components/icons/SwitchIcon';
 const CASH_METHOD_ID = 'efectivo';
 
 const defaultCategories: Category[] = [
-  { id: '1', name: 'Comida', icon: 'Food', color: '#008f39' },
-  { id: '2', name: 'Transporte', icon: 'Transport', color: '#3b82f6' },
-  { id: '3', name: 'Ropa', icon: 'Clothing', color: '#ec4899' },
-  { id: '4', name: 'Hogar', icon: 'House', color: '#f97316' },
-  { id: '5', name: 'Entretenimiento', icon: 'Entertainment', color: '#8b5cf6' },
-  { id: '6', name: 'Salud', icon: 'Health', color: '#ef4444' },
-  { id: '8', name: 'Ahorro', icon: 'Tag', color: '#14b8a6' },
-  { id: '9', name: 'Préstamos', icon: 'MoneyBag', color: '#3b82f6' },
-  { id: '7', name: 'General', icon: 'ArrowDown', color: '#ef4444' },
+  { id: '1', name: 'Comida', icon: '🍔', color: '#008f39' },
+  { id: '2', name: 'Transporte', icon: '🚗', color: '#3b82f6' },
+  { id: '3', name: 'Ropa', icon: '👕', color: '#ec4899' },
+  { id: '4', name: 'Hogar', icon: '🏠', color: '#f97316' },
+  { id: '5', name: 'Entretenimiento', icon: '🎬', color: '#8b5cf6' },
+  { id: '6', name: 'Salud', icon: '❤️‍🩹', color: '#ef4444' },
+  { id: '8', name: 'Ahorro', icon: '💰', color: '#14b8a6' },
+  { id: '9', name: 'Préstamos', icon: '🏦', color: '#3b82f6' },
+  { id: '7', name: 'General', icon: '🧾', color: '#ef4444' },
 ];
 
 const defaultBankAccounts: BankAccount[] = [

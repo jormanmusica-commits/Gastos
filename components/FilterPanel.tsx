@@ -201,7 +201,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({ onApply, currentFilters, bank
                             />
                             <div className="flex items-center gap-2">
                                 <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: `${cat.color}20` }}>
-                                    <CategoryIcon iconName={cat.icon} color={cat.color} />
+                                    <CategoryIcon iconName={cat.icon} className="text-xl" />
                                 </div>
                                 <span className="font-medium">{cat.name}</span>
                             </div>

@@ -17,11 +17,6 @@ interface CategoryModalProps {
   onDeleteCategory: (id: string) => void;
 }
 
-const iconOptions = [
-    'Food', 'ShoppingCart', 'Transport', 'Travel', 'House', 'Bill', 'Clothing', 
-    'Entertainment', 'Health', 'Education', 'Pet', 'Gift', 'Subscription', 
-    'MoneyBag', 'ArrowDown', 'ColombiaFlag', 'Tag', 'Beauty'
-];
 const colorOptions = [
   '#ef4444', '#f87171', '#f97316', '#fb923c',
   '#eab308', '#facc15', '#22c55e', '#4ade80',
@@ -48,28 +43,10 @@ const ColorPicker: React.FC<{selectedColor: string, onSelect: (color: string) =>
     </div>
 );
 
-const IconPicker: React.FC<{selectedIcon: string, onSelect: (icon: string) => void, color: string}> = ({ selectedIcon, onSelect, color }) => (
-    <div className="grid grid-cols-7 gap-2 my-2">
-      {iconOptions.map(iconName => (
-        <button
-          key={iconName}
-          type="button"
-          onClick={() => onSelect(iconName)}
-          className={`w-full aspect-square rounded-lg flex items-center justify-center transition-all duration-150 transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-gray-900 focus:ring-white ${selectedIcon === iconName ? 'ring-2' : ''}`}
-          style={{ backgroundColor: `${color}20`, borderColor: color }}
-          aria-label={`Select icon ${iconName}`}
-        >
-          <CategoryIcon iconName={iconName} color={color} className="w-6 h-6"/>
-        </button>
-      ))}
-    </div>
-);
-
-
 const CategoryModal: React.FC<CategoryModalProps> = ({ 
     isOpen, onClose, categories, onSelectCategory, onAddCategory, onUpdateCategory, onDeleteCategory 
 }) => {
-  const [newCategory, setNewCategory] = useState({ name: '', icon: iconOptions[15], color: colorOptions[22] });
+  const [newCategory, setNewCategory] = useState({ name: '', icon: '🏷️', color: colorOptions[22] });
   const [editingCategory, setEditingCategory] = useState<{id: string, name: string, icon: string, color: string} | null>(null);
 
   if (!isOpen) return null;
@@ -77,7 +54,7 @@ const CategoryModal: React.FC<CategoryModalProps> = ({
   const handleAdd = () => {
     if (newCategory.name.trim()) {
       onAddCategory(newCategory.name.trim(), newCategory.icon, newCategory.color);
-      setNewCategory({ name: '', icon: iconOptions[15], color: colorOptions[22] });
+      setNewCategory({ name: '', icon: '🏷️', color: colorOptions[22] });
     }
   };
 
@@ -131,11 +108,16 @@ const CategoryModal: React.FC<CategoryModalProps> = ({
                     </button>
                   </div>
                    <div>
-                        <h4 className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-1">Icono</h4>
-                        <IconPicker 
-                            selectedIcon={editingCategory.icon}
-                            onSelect={(icon) => setEditingCategory({...editingCategory, icon})}
-                            color={editingCategory.color}
+                        <h4 className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-1">Icono (Emoji)</h4>
+                        <input
+                            type="text"
+                            value={editingCategory.icon}
+                            onChange={(e) => {
+                                const lastChar = [...e.target.value].pop() || '🏷️';
+                                setEditingCategory({ ...editingCategory, icon: lastChar });
+                            }}
+                            className="w-full text-4xl p-2 text-center border border-gray-300 dark:border-gray-600 rounded-md bg-transparent text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                            maxLength={2}
                         />
                    </div>
                    <div>
@@ -155,7 +137,7 @@ const CategoryModal: React.FC<CategoryModalProps> = ({
                       disabled={!onSelectCategory}
                     >
                       <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ backgroundColor: `${cat.color}20` }}>
-                        <CategoryIcon iconName={cat.icon} color={cat.color} />
+                        <CategoryIcon iconName={cat.icon} className="text-2xl" />
                       </div>
                       <span className="text-gray-800 dark:text-gray-100">{cat.name}</span>
                     </button>
@@ -193,11 +175,16 @@ const CategoryModal: React.FC<CategoryModalProps> = ({
             </div>
           </div>
           <div>
-            <h4 className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-1">Icono</h4>
-            <IconPicker 
-                selectedIcon={newCategory.icon} 
-                onSelect={(icon) => setNewCategory({...newCategory, icon, color: newCategory.color})}
-                color={newCategory.color}
+            <h4 className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-1">Icono (Emoji)</h4>
+            <input
+                type="text"
+                value={newCategory.icon}
+                onChange={(e) => {
+                    const lastChar = [...e.target.value].pop() || '🏷️';
+                    setNewCategory({ ...newCategory, icon: lastChar });
+                }}
+                className="w-full text-4xl p-2 text-center border border-gray-300 dark:border-gray-600 rounded-md bg-transparent text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                maxLength={2}
             />
           </div>
           <div>

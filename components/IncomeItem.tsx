@@ -102,7 +102,7 @@ const TransactionItem: React.FC<TransactionItemProps> = ({
             </div>
         ) : category ? (
           <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${!isIncome ? expenseIconBorderClass : ''}`} style={{ backgroundColor: `${category.color}20` }}>
-            <CategoryIcon iconName={category.icon} color={category.color} />
+            <CategoryIcon iconName={category.icon} className="text-2xl" />
           </div>
         ) : null}
         <div className={`min-w-0 flex-grow ${!category && !isTransfer && !isIncome && !isGift ? 'ml-14' : ''}`}>
