@@ -303,16 +303,7 @@ const App: React.FC = () => {
     return [defaultProfileSpain, defaultProfileColombia];
   });
   
-  const [activeProfileId, setActiveProfileId] = useState<string | null>(() => {
-    const savedId = localStorage.getItem('activeProfileId');
-    // Can't check against state here, so we re-read from localStorage
-    const savedProfiles = localStorage.getItem('profiles'); 
-    const initialProfiles: Profile[] = savedProfiles ? JSON.parse(savedProfiles) : [];
-    if (savedId && (initialProfiles.length > 0 ? initialProfiles.some(p => p.id === savedId) : true)) { // Allow savedId if profiles aren't loaded yet
-        return savedId;
-    }
-    return profiles[0]?.id || null;
-  });
+  const [activeProfileId, setActiveProfileId] = useState<string | null>(null);
   
   const [currentPage, setCurrentPage] = useState<Page>('inicio');
   const [initialTransferFromId, setInitialTransferFromId] = useState<string | null>(null);
@@ -394,15 +385,6 @@ const App: React.FC = () => {
         localStorage.removeItem('fixedExpenses');
     }
   }, [profiles]);
-
-  useEffect(() => {
-    if(activeProfileId) {
-        localStorage.setItem('activeProfileId', activeProfileId);
-    } else {
-        localStorage.removeItem('activeProfileId');
-    }
-  }, [activeProfileId]);
-
 
   const updateActiveProfileData = (updater: (data: ProfileData) => ProfileData) => {
     if (!activeProfileId) return;
@@ -941,7 +923,7 @@ const App: React.FC = () => {
   }, [activeProfile, balance, balancesByMethod]);
 
   const handleExportAllDataToJson = useCallback(async () => {
-    const dataToExport = { profiles, activeProfileId, theme, fabPosition };
+    const dataToExport = { profiles, theme, fabPosition };
     const jsonString = JSON.stringify(dataToExport, null, 2);
     const blob = new Blob([jsonString], { type: 'application/json' });
     
@@ -980,7 +962,7 @@ const App: React.FC = () => {
       document.body.removeChild(link);
       URL.revokeObjectURL(url); // Clean up the object URL
     }
-  }, [profiles, activeProfileId, theme, fabPosition]);
+  }, [profiles, theme, fabPosition]);
 
   const handleImportDataFromJson = useCallback((file: File) => {
     if (!window.confirm('¿Estás seguro de que quieres importar estos datos? Esto sobreescribirá todos los datos actuales.')) {
@@ -994,11 +976,10 @@ const App: React.FC = () => {
                 const data = JSON.parse(result);
                 if (data.profiles && Array.isArray(data.profiles)) {
                     setProfiles(data.profiles);
-                    setActiveProfileId(data.activeProfileId || null);
+                    setActiveProfileId(null);
                     setTheme(data.theme || Theme.DARK);
                     setFabPosition(data.fabPosition || getDefaultFabPosition());
                     alert('Datos importados con éxito.');
-                    if (!data.activeProfileId) setCurrentPage('inicio');
                 } else {
                     alert('El archivo de importación no tiene el formato correcto.');
                 }
@@ -1359,6 +1340,11 @@ const App: React.FC = () => {
       return [];
     }, [currentPage, resumenMenuItems, patrimonioMenuItems]);
 
+    const handleGoHome = useCallback(() => {
+        setActiveProfileId(null);
+        setCurrentPage('inicio');
+    }, []);
+
     if (!activeProfileId || !activeProfile) {
         return (
           <div className={`app-container ${theme}`}>
@@ -1491,7 +1477,7 @@ const App: React.FC = () => {
                 manualAssetsValue={manualAssetsValue}
             /> }
         </main>
-        <BottomNav currentPage={currentPage} onNavigate={setCurrentPage} />
+        <BottomNav currentPage={currentPage} onNavigate={setCurrentPage} onGoHome={handleGoHome} />
       </div>
         <TransferModal 
             isOpen={isTransferModalOpen}

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { Page } from '../types';
 import HomeIcon from './icons/HomeIcon';
 import GearIcon from './icons/GearIcon';
@@ -7,9 +7,27 @@ import ScaleIcon from './icons/ScaleIcon';
 interface BottomNavProps {
   currentPage: Page;
   onNavigate: (page: Page) => void;
+  onGoHome: () => void;
 }
 
-const BottomNav: React.FC<BottomNavProps> = ({ currentPage, onNavigate }) => {
+const BottomNav: React.FC<BottomNavProps> = ({ currentPage, onNavigate, onGoHome }) => {
+  const lastClickTimeRef = useRef(0);
+
+  const handleHomeClick = () => {
+      const now = new Date().getTime();
+      const timeSinceLastClick = now - lastClickTimeRef.current;
+
+      if (timeSinceLastClick < 300 && timeSinceLastClick > 0) { // Double click
+          onGoHome();
+          lastClickTimeRef.current = 0; // Reset to avoid triple click issues
+      } else { // Single click
+          if (currentPage !== 'resumen' && currentPage !== 'inicio') {
+              onNavigate('resumen');
+          }
+      }
+      lastClickTimeRef.current = now;
+  };
+
   const NavButton: React.FC<{
     onClick: () => void;
     label: string;
@@ -32,13 +50,7 @@ const BottomNav: React.FC<BottomNavProps> = ({ currentPage, onNavigate }) => {
     <footer className="fixed bottom-0 left-0 right-0 z-30 h-20 bg-white dark:bg-gray-900 shadow-[0_-5px_20px_-5px_rgba(0,0,0,0.1)] dark:shadow-none dark:border-t dark:border-white/10">
       <div className="flex justify-around items-center h-full max-w-md mx-auto px-2">
           <NavButton 
-              onClick={() => {
-                  if (currentPage === 'resumen') {
-                      onNavigate('inicio');
-                  } else {
-                      onNavigate('resumen');
-                  }
-              }} 
+              onClick={handleHomeClick} 
               label="Resumen" 
               isActive={currentPage === 'resumen' || currentPage === 'inicio'}>
               <HomeIcon className="w-7 h-7" />
