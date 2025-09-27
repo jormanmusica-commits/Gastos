@@ -190,7 +190,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
                         placeholder={isIncome ? "Ej: Salario" : "Ej: Compra de comida"}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 bg-white dark:bg-gray-700"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                         style={{'--tw-ring-color': config.themeColor} as React.CSSProperties}
                     />
                 </div>

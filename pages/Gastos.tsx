@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 // FIX: Import Category and FixedExpense types
 import { Page, Profile, Category, FixedExpense, QuickExpense } from '../types';
 import TransactionForm from '../components/TransactionForm';
@@ -78,6 +78,14 @@ const Gastos: React.FC<GastosProps> = ({
         setActiveMethodId(id);
         setIsFormVisible(true);
     };
+
+    useEffect(() => {
+        if (isFormVisible) {
+            setTimeout(() => {
+                formContainerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }, 100);
+        }
+    }, [isFormVisible]);
 
     const getButtonClass = (isActive: boolean, disabled = false) => {
         const baseClasses = 'w-full flex items-center justify-center gap-2 p-3 font-semibold text-center rounded-lg transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-gray-900';

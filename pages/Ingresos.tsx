@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Page, Profile } from '../types';
 import TransactionForm from '../components/TransactionForm';
 import Summary from '../components/Summary';
@@ -37,6 +37,15 @@ const Ingresos: React.FC<IngresosProps> = ({
     setActiveMethodId(id);
     setIsFormVisible(true);
   };
+
+  useEffect(() => {
+    if (isFormVisible) {
+        // Use a short timeout to allow the element to become visible before scrolling
+        setTimeout(() => {
+            formContainerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }, 100);
+    }
+  }, [isFormVisible]);
 
   const getButtonClass = (isActive: boolean) => {
     const baseClasses = 'w-full flex items-center justify-center gap-2 p-3 font-semibold text-center rounded-lg transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-gray-900';
