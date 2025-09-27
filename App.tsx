@@ -1157,11 +1157,10 @@ const App: React.FC = () => {
     reader.readAsText(file);
   }, [getDefaultFabPosition]);
 
-    const { monthlyIncome, monthlyExpenses, monthlyIncomeByBank, monthlyIncomeByCash, monthlyExpensesByBank, monthlyExpensesByCash, totalIncome, totalExpenses, manualAssetsValue, totalLiabilitiesValue, totalLoansValue, savingsBySource } = useMemo(() => {
-    // FIX: The type of `savingsBySource` was being inferred as `Record<string, unknown>`, causando type errors. Explicitly typing the returned object fixes this.
+    const { monthlyIncome, monthlyExpenses, monthlyIncomeByBank, monthlyIncomeByCash, monthlyExpensesByBank, monthlyExpensesByCash, totalIncome, totalExpenses, manualAssetsValue, totalLiabilitiesValue, totalLoansValue, savingsBySource, totalFixedExpenses, totalPaidFixedExpensesThisMonth, remainingFixedExpensesToPay } = useMemo(() => {
     if (!activeProfile) {
         const savingsBySource: Record<string, { total: number, name: string, color: string }> = {};
-        return { monthlyIncome: 0, monthlyExpenses: 0, monthlyIncomeByBank: 0, monthlyIncomeByCash: 0, monthlyExpensesByBank: 0, monthlyExpensesByCash: 0, totalIncome: 0, totalExpenses: 0, manualAssetsValue: 0, totalLiabilitiesValue: 0, totalLoansValue: 0, savingsBySource };
+        return { monthlyIncome: 0, monthlyExpenses: 0, monthlyIncomeByBank: 0, monthlyIncomeByCash: 0, monthlyExpensesByBank: 0, monthlyExpensesByCash: 0, totalIncome: 0, totalExpenses: 0, manualAssetsValue: 0, totalLiabilitiesValue: 0, totalLoansValue: 0, savingsBySource, totalFixedExpenses: 0, totalPaidFixedExpensesThisMonth: 0, remainingFixedExpensesToPay: 0 };
     }
 
     const now = new Date();
@@ -1217,7 +1216,26 @@ const App: React.FC = () => {
         sbs[sourceId].total += asset.value;
     });
 
-    return { monthlyIncome: mi, monthlyExpenses: me, monthlyIncomeByBank: mib, monthlyIncomeByCash: mic, monthlyExpensesByBank: meb, monthlyExpensesByCash: mec, totalIncome: ti, totalExpenses: te, manualAssetsValue: mav, totalLiabilitiesValue: tlv, totalLoansValue: tlov, savingsBySource: sbs };
+    const paidExpenseNames = new Set<string>();
+    activeProfile.data.transactions
+        .filter(t => {
+            if (t.type !== 'expense') return false;
+            const [year, month] = t.date.split('-').map(Number);
+            return year === currentYear && (month - 1) === currentMonth;
+        })
+        .forEach(t => {
+            paidExpenseNames.add(t.description);
+        });
+        
+    const tfe = (activeProfile.data.fixedExpenses || []).reduce((sum, expense) => sum + expense.amount, 0);
+    
+    const tpfetm = (activeProfile.data.fixedExpenses || [])
+      .filter(exp => paidExpenseNames.has(exp.name))
+      .reduce((total, expense) => total + expense.amount, 0);
+
+    const rfetp = tfe - tpfetm;
+
+    return { monthlyIncome: mi, monthlyExpenses: me, monthlyIncomeByBank: mib, monthlyIncomeByCash: mic, monthlyExpensesByBank: meb, monthlyExpensesByCash: mec, totalIncome: ti, totalExpenses: te, manualAssetsValue: mav, totalLiabilitiesValue: tlv, totalLoansValue: tlov, savingsBySource: sbs, totalFixedExpenses: tfe, totalPaidFixedExpensesThisMonth: tpfetm, remainingFixedExpensesToPay: rfetp };
   }, [activeProfile, categories]);
 
   const minDateForExpenses = useMemo(() => {
@@ -1574,6 +1592,7 @@ const App: React.FC = () => {
                 onDeleteCategory={handleDeleteCategory}
                 bankAccounts={activeProfile.data.bankAccounts}
                 onAddBankAccount={handleAddBankAccount}
+                // FIX: Changed onUpdateBankAccount to handleUpdateBankAccount
                 onUpdateBankAccount={handleUpdateBankAccount}
                 onDeleteBankAccount={handleDeleteBankAccount}
                 onExportData={handleExportData}
@@ -1612,6 +1631,9 @@ const App: React.FC = () => {
                 onInitiateTransfer={handleInitiateTransfer}
                 onOpenGiftModal={setGiftingFixedExpense}
                 categories={categories}
+                totalFixedExpenses={totalFixedExpenses}
+                totalPaidFixedExpensesThisMonth={totalPaidFixedExpensesThisMonth}
+                remainingFixedExpensesToPay={remainingFixedExpensesToPay}
             /> }
             { currentPage === 'patrimonio' && <Patrimonio
                     profile={activeProfile}
@@ -1682,6 +1704,7 @@ const App: React.FC = () => {
             onDeleteFixedExpense={handleDeleteFixedExpense}
             currency={activeProfile.currency}
             onAddCategory={handleAddCategory}
+            // FIX: Changed onUpdateCategory to handleUpdateCategory
             onUpdateCategory={handleUpdateCategory}
             onDeleteCategory={handleDeleteCategory}
         />
@@ -1695,6 +1718,7 @@ const App: React.FC = () => {
             onDeleteQuickExpense={handleDeleteQuickExpense}
             currency={activeProfile.currency}
             onAddCategory={handleAddCategory}
+            // FIX: Changed onUpdateCategory to handleUpdateCategory
             onUpdateCategory={handleUpdateCategory}
             onDeleteCategory={handleDeleteCategory}
         />
@@ -1718,6 +1742,7 @@ const App: React.FC = () => {
             currency={activeProfile.currency}
             categories={categories}
             onAddCategory={handleAddCategory}
+            // FIX: Changed onUpdateCategory to handleUpdateCategory
             onUpdateCategory={handleUpdateCategory}
             onDeleteCategory={handleDeleteCategory}
         />

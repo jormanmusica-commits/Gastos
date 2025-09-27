@@ -63,14 +63,6 @@ const FixedExpenseModal: React.FC<FixedExpenseModalProps> = ({
     return fixedExpenses.reduce((total, expense) => total + expense.amount, 0);
   }, [fixedExpenses]);
 
-  const totalPaidThisMonth = useMemo(() => {
-    return fixedExpenses
-      .filter(exp => paidExpenseNames.has(exp.name))
-      .reduce((total, expense) => total + expense.amount, 0);
-  }, [fixedExpenses, paidExpenseNames]);
-
-  const remainingToPay = totalFixedExpenses - totalPaidThisMonth;
-
   const sortedFixedExpenses = useMemo(() => {
     return [...fixedExpenses].sort((a, b) => {
       const aIsPaid = paidExpenseNames.has(a.name);
@@ -139,24 +131,6 @@ const FixedExpenseModal: React.FC<FixedExpenseModalProps> = ({
           </header>
 
           <div className="p-4 space-y-2 overflow-y-auto">
-            {mode === 'select' && (
-              <div className="mb-4 p-3 bg-gray-100 dark:bg-gray-800 rounded-lg space-y-2">
-                <div className="flex justify-between items-center">
-                  <span className="text-md font-semibold text-gray-700 dark:text-gray-200">Total Fijo Mensual</span>
-                  <span className="text-lg font-bold text-red-500">{formatCurrency(totalFixedExpenses)}</span>
-                </div>
-                <div className="flex justify-between items-center text-sm">
-                  <span className="text-gray-500 dark:text-gray-400">Pagado este mes</span>
-                  <span className="font-semibold text-green-500">{formatCurrency(totalPaidThisMonth)}</span>
-                </div>
-                {remainingToPay > 0 && (
-                  <div className="flex justify-between items-center text-sm pt-2 border-t border-gray-200 dark:border-gray-700">
-                    <span className="font-bold text-gray-600 dark:text-gray-300">Faltante por Pagar</span>
-                    <span className="font-bold text-orange-500">{formatCurrency(remainingToPay)}</span>
-                  </div>
-                )}
-              </div>
-            )}
             {fixedExpenses.length === 0 ? (
               <p className="text-center text-gray-500 dark:text-gray-400 py-4">No hay gastos fijos guardados.</p>
             ) : (

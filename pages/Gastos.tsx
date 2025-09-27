@@ -34,6 +34,9 @@ interface GastosProps {
   onInitiateTransfer: (fromAccountId: string) => void;
   onOpenGiftModal: (expense: FixedExpense) => void;
   categories: Category[];
+  totalFixedExpenses: number;
+  totalPaidFixedExpensesThisMonth: number;
+  remainingFixedExpensesToPay: number;
 }
 
 const Gastos: React.FC<GastosProps> = ({ 
@@ -45,7 +48,10 @@ const Gastos: React.FC<GastosProps> = ({
     minDateForExpenses,
     onInitiateTransfer,
     onOpenGiftModal,
-    categories
+    categories,
+    totalFixedExpenses,
+    totalPaidFixedExpensesThisMonth,
+    remainingFixedExpensesToPay
 }) => {
     const { data: { bankAccounts, fixedExpenses, quickExpenses, transactions }, currency } = profile;
     const [activeMethodId, setActiveMethodId] = useState<string | null>(null);
@@ -196,6 +202,24 @@ const Gastos: React.FC<GastosProps> = ({
 
               <div className="space-y-6">
                 <div>
+                  {totalFixedExpenses > 0 && (
+                      <div className="mb-4 p-3 bg-gray-100 dark:bg-gray-800 rounded-lg space-y-2">
+                        <div className="flex justify-between items-center">
+                          <span className="text-md font-semibold text-gray-700 dark:text-gray-200">Total Fijo Mensual</span>
+                          <span className="text-lg font-bold text-red-500">{formatCurrency(totalFixedExpenses)}</span>
+                        </div>
+                        <div className="flex justify-between items-center text-sm">
+                          <span className="text-gray-500 dark:text-gray-400">Pagado este mes</span>
+                          <span className="font-semibold text-green-500">{formatCurrency(totalPaidFixedExpensesThisMonth)}</span>
+                        </div>
+                        {remainingFixedExpensesToPay > 0 && (
+                          <div className="flex justify-between items-center text-sm pt-2 border-t border-gray-200 dark:border-gray-700">
+                            <span className="font-bold text-gray-600 dark:text-gray-300">Faltante por Pagar</span>
+                            <span className="font-bold text-orange-500">{formatCurrency(remainingFixedExpensesToPay)}</span>
+                          </div>
+                        )}
+                      </div>
+                  )}
                     <div className="mb-4 space-y-3">
                         {quickExpenses.length > 0 && (
                             <div>
@@ -221,7 +245,7 @@ const Gastos: React.FC<GastosProps> = ({
                           className="w-full flex items-center justify-center gap-2 text-sm font-semibold text-amber-600 dark:text-amber-400 py-2 px-4 rounded-lg border-2 border-dashed border-amber-400/50 dark:border-amber-600/50 hover:bg-amber-500/10 transition-colors"
                         >
                           <BoltIcon className="w-4 h-4" />
-                          Añadir desde Gastos Fijos
+                          Pagar / Gestionar Gastos Fijos
                         </button>
                   </div>
                   <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-3">
