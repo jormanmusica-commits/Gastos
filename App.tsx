@@ -1522,12 +1522,12 @@ const App: React.FC = () => {
 
   return (
     <div
-        className={`app-container ${theme}`}
+        className={`app-container ${theme} min-h-screen flex flex-col`}
         onTouchStart={!isAnyModalOpen && activeProfileId ? handleTouchStart : undefined}
         onTouchMove={!isAnyModalOpen && activeProfileId ? handleTouchMove : undefined}
         onTouchEnd={!isAnyModalOpen && activeProfileId ? handleTouchEnd : undefined}
     >
-        <main className="container mx-auto px-4 pt-12 pb-24 max-w-3xl min-h-[calc(100vh-80px)]">
+        <main className="container mx-auto px-4 pt-12 pb-24 max-w-3xl flex-grow">
             { (currentPage === 'inicio' || currentPage === 'resumen') && <Resumen 
                 profile={activeProfile}
                 balance={balance}
