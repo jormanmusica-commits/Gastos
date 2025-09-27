@@ -1,10 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Category } from '../types';
 import CloseIcon from './icons/CloseIcon';
 import PlusIcon from './icons/PlusIcon';
 import TrashIcon from './icons/TrashIcon';
-import EditIcon from './icons/EditIcon';
-import CheckIcon from './icons/CheckIcon';
 import CategoryIcon from './CategoryIcon';
 
 interface CategoryModalProps {
@@ -21,21 +19,72 @@ const CategoryModal: React.FC<CategoryModalProps> = ({
     isOpen, onClose, categories, onSelectCategory, onAddCategory, onUpdateCategory, onDeleteCategory 
 }) => {
   const [newCategory, setNewCategory] = useState({ name: '', icon: '🏷️' });
-  const [editingCategory, setEditingCategory] = useState<{id: string, name: string, icon: string} | null>(null);
+  const [editingState, setEditingState] = useState<{ id: string; field: 'name' | 'icon' } | null>(null);
+  const [editValue, setEditValue] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (editingState) {
+        setTimeout(() => {
+            inputRef.current?.focus();
+            inputRef.current?.select();
+        }, 0);
+    }
+  }, [editingState]);
+
 
   if (!isOpen) return null;
+
+  const handleStartEdit = (cat: Category, field: 'name' | 'icon') => {
+      setEditingState({ id: cat.id, field });
+      setEditValue(field === 'name' ? cat.name : cat.icon);
+  };
+
+  const handleCancelEdit = () => {
+      setEditingState(null);
+      setEditValue('');
+  };
+
+  const handleUpdate = () => {
+      if (!editingState) return;
+      
+      const { id, field } = editingState;
+      const categoryToUpdate = categories.find(c => c.id === id);
+      
+      if (!categoryToUpdate) {
+          handleCancelEdit();
+          return;
+      }
+      
+      const finalValue = editValue.trim();
+      const originalValue = field === 'name' ? categoryToUpdate.name : categoryToUpdate.icon;
+
+      if (finalValue === '' || finalValue === originalValue) {
+          handleCancelEdit();
+          return;
+      }
+      
+      if (field === 'name') {
+          onUpdateCategory(id, finalValue, categoryToUpdate.icon);
+      } else {
+          onUpdateCategory(id, categoryToUpdate.name, finalValue);
+      }
+      handleCancelEdit();
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === 'Enter') {
+          (e.target as HTMLInputElement).blur(); // Triggers onBlur which calls handleUpdate
+      } else if (e.key === 'Escape') {
+          handleCancelEdit();
+      }
+  };
+
 
   const handleAdd = () => {
     if (newCategory.name.trim()) {
       onAddCategory(newCategory.name.trim(), newCategory.icon);
       setNewCategory({ name: '', icon: '🏷️' });
-    }
-  };
-
-  const handleUpdate = () => {
-    if (editingCategory && editingCategory.name.trim()) {
-      onUpdateCategory(editingCategory.id, editingCategory.name.trim(), editingCategory.icon);
-      setEditingCategory(null);
     }
   };
 
@@ -65,58 +114,64 @@ const CategoryModal: React.FC<CategoryModalProps> = ({
         </header>
 
         <div className="p-4 space-y-2 overflow-y-auto">
-          {categories.map(cat => (
-            <div key={cat.id} className="p-2 rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-gray-800/50">
-              {editingCategory?.id === cat.id ? (
-                <div className="flex-grow space-y-3">
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="text"
-                      value={editingCategory.icon}
-                      placeholder="😀"
-                      onChange={(e) => {
-                          setEditingCategory({ ...editingCategory, icon: e.target.value });
-                      }}
-                      onFocus={(e) => e.target.select()}
-                      className="w-20 text-4xl p-2 text-center border border-gray-300 dark:border-gray-600 rounded-md bg-transparent text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    />
-                    <input
-                      type="text"
-                      value={editingCategory.name}
-                      onChange={(e) => setEditingCategory({ ...editingCategory, name: e.target.value })}
-                      className="w-full px-2 py-1 border border-[#008f39] rounded-md bg-transparent text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-[#008f39]"
-                      autoFocus
-                    />
-                    <button onClick={handleUpdate} className="p-2 text-[#008f39] hover:text-[#007a33] transition-colors">
-                      <CheckIcon className="w-6 h-6" />
-                    </button>
-                  </div>
+          {categories.map(cat => {
+            const isEditingName = editingState?.id === cat.id && editingState.field === 'name';
+            const isEditingIcon = editingState?.id === cat.id && editingState.field === 'icon';
+
+            return (
+              <div key={cat.id} className="flex items-center justify-between p-2 rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-gray-800/50">
+                <div
+                    onClick={() => onSelectCategory?.(cat)}
+                    className="flex-grow flex items-center space-x-4 text-left p-2"
+                >
+                    {isEditingIcon ? (
+                        <input
+                            ref={inputRef}
+                            type="text"
+                            value={editValue}
+                            onChange={e => setEditValue(e.target.value)}
+                            onBlur={handleUpdate}
+                            onKeyDown={handleKeyDown}
+                            className="w-16 text-3xl p-1 text-center border border-blue-500 rounded-md bg-transparent text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        />
+                    ) : (
+                        <div
+                            onClick={(e) => { e.stopPropagation(); handleStartEdit(cat, 'icon'); }}
+                            className="w-10 h-10 rounded-full flex items-center justify-center bg-gray-200 dark:bg-gray-700 cursor-pointer"
+                        >
+                            <CategoryIcon iconName={cat.icon} className="text-2xl" />
+                        </div>
+                    )}
+                    
+                    {isEditingName ? (
+                        <div className="flex-grow">
+                            <input
+                                ref={inputRef}
+                                type="text"
+                                value={editValue}
+                                onChange={e => setEditValue(e.target.value)}
+                                onBlur={handleUpdate}
+                                onKeyDown={handleKeyDown}
+                                className="w-full px-2 py-1 border border-blue-500 rounded-md bg-transparent text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                            />
+                        </div>
+                    ) : (
+                        <span
+                            onClick={(e) => { e.stopPropagation(); handleStartEdit(cat, 'name'); }}
+                            className="text-gray-800 dark:text-gray-100 cursor-pointer"
+                        >
+                            {cat.name}
+                        </span>
+                    )}
                 </div>
-              ) : (
-                <div className="flex items-center justify-between">
-                    <button 
-                      onClick={() => onSelectCategory && onSelectCategory(cat)}
-                      onMouseDown={(e) => e.preventDefault()}
-                      className="flex-grow flex items-center space-x-4 text-left p-2"
-                      disabled={!onSelectCategory}
-                    >
-                      <div className="w-10 h-10 rounded-full flex items-center justify-center bg-gray-200 dark:bg-gray-700">
-                        <CategoryIcon iconName={cat.icon} className="text-2xl" />
-                      </div>
-                      <span className="text-gray-800 dark:text-gray-100">{cat.name}</span>
-                    </button>
-                    <div className="flex items-center space-x-1">
-                        <button onClick={() => setEditingCategory({ id: cat.id, name: cat.name, icon: cat.icon })} className="p-2 text-gray-400 hover:text-blue-500 transition-colors">
-                        <EditIcon className="w-5 h-5" />
-                        </button>
-                        <button onClick={() => handleDelete(cat.id)} className="p-2 text-gray-400 hover:text-red-500 transition-colors">
+                <div className="flex items-center space-x-1">
+                    <button onClick={() => handleDelete(cat.id)} className="p-2 text-gray-400 hover:text-red-500 transition-colors">
                         <TrashIcon className="w-5 h-5" />
-                        </button>
-                    </div>
+                    </button>
                 </div>
-              )}
-            </div>
-          ))}
+              </div>
+            )
+          })}
         </div>
 
         <footer className="p-4 border-t border-gray-200 dark:border-gray-700 mt-auto space-y-3">
