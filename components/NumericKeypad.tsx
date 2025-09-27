@@ -94,10 +94,6 @@ const NumericKeypad: React.FC<NumericKeypadProps> = ({ isOpen, onClose, onSubmit
     });
   };
 
-  const handleClearClick = () => {
-    setDisplayValue('0');
-  };
-
   const handleSubmit = () => {
     let valueToSubmit = displayValue;
     if (valueToSubmit.endsWith(',')) {
@@ -128,39 +124,31 @@ const NumericKeypad: React.FC<NumericKeypadProps> = ({ isOpen, onClose, onSubmit
             <span className="text-3xl font-light text-gray-500 dark:text-gray-400 ml-2">{currencySymbol}</span>
         </div>
         <div className="grid grid-cols-4 gap-3">
-          {/* Row 1 */}
-          <KeypadButton onClick={() => handleNumberClick('1')} ariaLabel="1">1</KeypadButton>
-          <KeypadButton onClick={() => handleNumberClick('2')} ariaLabel="2">2</KeypadButton>
-          <KeypadButton onClick={() => handleNumberClick('3')} ariaLabel="3">3</KeypadButton>
-          <KeypadButton onClick={handleBackspaceClick} ariaLabel="Borrar"><BackspaceIcon className="w-8 h-8" /></KeypadButton>
-          
-          {/* Row 2 */}
-          <KeypadButton onClick={() => handleNumberClick('4')} ariaLabel="4">4</KeypadButton>
-          <KeypadButton onClick={() => handleNumberClick('5')} ariaLabel="5">5</KeypadButton>
-          <KeypadButton onClick={() => handleNumberClick('6')} ariaLabel="6">6</KeypadButton>
-          <KeypadButton onClick={handleClearClick} ariaLabel="Limpiar" className="text-xl font-semibold text-amber-500">C</KeypadButton>
-          
-          {/* Row 3 */}
-          <KeypadButton onClick={() => handleNumberClick('7')} ariaLabel="7">7</KeypadButton>
-          <KeypadButton onClick={() => handleNumberClick('8')} ariaLabel="8">8</KeypadButton>
-          <KeypadButton onClick={() => handleNumberClick('9')} ariaLabel="9">9</KeypadButton>
-          
-          {/* Submit button on rows 3 and 4 */}
-          <div className="row-span-2">
+            <KeypadButton onClick={() => handleNumberClick('7')} ariaLabel="7">7</KeypadButton>
+            <KeypadButton onClick={() => handleNumberClick('8')} ariaLabel="8">8</KeypadButton>
+            <KeypadButton onClick={() => handleNumberClick('9')} ariaLabel="9">9</KeypadButton>
+            <KeypadButton onClick={handleBackspaceClick} ariaLabel="Borrar"><BackspaceIcon className="w-8 h-8" /></KeypadButton>
+            
+            <KeypadButton onClick={() => handleNumberClick('4')} ariaLabel="4">4</KeypadButton>
+            <KeypadButton onClick={() => handleNumberClick('5')} ariaLabel="5">5</KeypadButton>
+            <KeypadButton onClick={() => handleNumberClick('6')} ariaLabel="6">6</KeypadButton>
+
             <button
                 type="button"
                 onClick={handleSubmit}
                 aria-label="Confirmar"
-                className="w-full h-full flex items-center justify-center rounded-lg text-white transition-colors active:brightness-90"
-                style={{ backgroundColor: themeColor }}
+                className="row-span-3 h-full flex items-center justify-center rounded-lg text-white transition-colors active:brightness-90"
+                style={{ backgroundColor: '#008f39' }}
             >
                 <CheckIcon className="w-10 h-10" />
             </button>
-          </div>
-          
-          {/* Row 4 */}
-          <KeypadButton onClick={() => handleNumberClick('0')} ariaLabel="0" className="col-span-2">0</KeypadButton>
-          <KeypadButton onClick={handleCommaClick} ariaLabel="Coma">,</KeypadButton>
+            
+            <KeypadButton onClick={() => handleNumberClick('1')} ariaLabel="1">1</KeypadButton>
+            <KeypadButton onClick={() => handleNumberClick('2')} ariaLabel="2">2</KeypadButton>
+            <KeypadButton onClick={() => handleNumberClick('3')} ariaLabel="3">3</KeypadButton>
+            
+            <KeypadButton onClick={() => handleNumberClick('0')} className="col-span-2" ariaLabel="0">0</KeypadButton>
+            <KeypadButton onClick={handleCommaClick} ariaLabel="Coma">,</KeypadButton>
         </div>
       </div>
     </div>
