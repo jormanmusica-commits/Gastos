@@ -1566,7 +1566,7 @@ const App: React.FC = () => {
         onTouchMove={!isAnyModalOpen && activeProfileId ? handleTouchMove : undefined}
         onTouchEnd={!isAnyModalOpen && activeProfileId ? handleTouchEnd : undefined}
     >
-        <main className="container mx-auto px-4 pt-12 pb-28 max-w-3xl flex-grow overflow-y-auto">
+        <main className="container mx-auto px-4 pb-28 max-w-3xl flex-grow overflow-y-auto">
             { (currentPage === 'inicio' || currentPage === 'resumen') && <Resumen 
                 profile={activeProfile}
                 balance={balance}

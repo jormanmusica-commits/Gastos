@@ -201,7 +201,7 @@ const Resumen: React.FC<ResumenProps> = ({
   const isFilterActive = searchTerm.trim().length > 0 || !!advancedFilters;
 
   return (
-    <div className="animate-fade-in">
+    <div className="animate-fade-in pt-12">
       <h1 className="text-3xl font-bold text-center text-gray-800 dark:text-white mb-6">
         Resumen General
       </h1>
