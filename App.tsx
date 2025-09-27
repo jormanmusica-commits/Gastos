@@ -1561,12 +1561,12 @@ const App: React.FC = () => {
 
   return (
     <div
-        className={`app-container ${theme} min-h-screen flex flex-col`}
+        className={`app-container ${theme} h-screen flex flex-col bg-gray-50 dark:bg-gray-900`}
         onTouchStart={!isAnyModalOpen && activeProfileId ? handleTouchStart : undefined}
         onTouchMove={!isAnyModalOpen && activeProfileId ? handleTouchMove : undefined}
         onTouchEnd={!isAnyModalOpen && activeProfileId ? handleTouchEnd : undefined}
     >
-        <main className="container mx-auto px-4 pt-12 pb-[calc(6rem+var(--sab))] max-w-3xl flex-grow">
+        <main className="container mx-auto px-4 pt-12 pb-4 max-w-3xl flex-grow overflow-y-auto">
             { (currentPage === 'inicio' || currentPage === 'resumen') && <Resumen 
                 profile={activeProfile}
                 balance={balance}

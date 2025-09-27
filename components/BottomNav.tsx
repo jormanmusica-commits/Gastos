@@ -47,7 +47,7 @@ const BottomNav: React.FC<BottomNavProps> = ({ currentPage, onNavigate, onGoHome
   );
 
   return (
-    <footer className="fixed bottom-0 left-0 right-0 z-30 bg-white dark:bg-gray-900 shadow-[0_-5px_20px_-5px_rgba(0,0,0,0.1)] dark:shadow-none dark:border-t dark:border-white/10 h-[calc(5rem+var(--sab))]">
+    <footer className="flex-shrink-0 z-30 bg-white dark:bg-gray-900 shadow-[0_-5px_20px_-5px_rgba(0,0,0,0.1)] dark:shadow-none dark:border-t dark:border-white/10 h-[calc(5rem+var(--sab))]">
       <div className="flex justify-around items-center h-full max-w-md mx-auto px-2 pb-[var(--sab)]">
           <NavButton 
               onClick={handleHomeClick} 
