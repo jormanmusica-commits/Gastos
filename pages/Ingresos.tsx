@@ -38,15 +38,6 @@ const Ingresos: React.FC<IngresosProps> = ({
     setIsFormVisible(true);
   };
 
-  useEffect(() => {
-    if (isFormVisible) {
-        // Use a short timeout to allow the element to become visible before scrolling
-        setTimeout(() => {
-            formContainerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        }, 100);
-    }
-  }, [isFormVisible]);
-
   const getButtonClass = (isActive: boolean) => {
     const baseClasses = 'w-full flex items-center justify-center gap-2 p-3 font-semibold text-center rounded-lg transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-gray-900';
     if (isActive) {
@@ -72,6 +63,9 @@ const Ingresos: React.FC<IngresosProps> = ({
   const handleAnimationEnd = () => {
     if (!isFormVisible) {
         setActiveMethodId(null);
+    } else {
+        // When the form becomes visible, scroll it into view so the keypad is visible.
+        formContainerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
     }
   };
 
@@ -122,7 +116,7 @@ const Ingresos: React.FC<IngresosProps> = ({
             </div>
 
             <div 
-              className={`transition-all duration-700 ease-in-out overflow-hidden ${isFormVisible ? 'max-h-[1000px] opacity-100' : 'max-h-0 opacity-0'}`}
+              className={`transition-all duration-300 ease-in-out overflow-hidden ${isFormVisible ? 'max-h-[1000px] opacity-100' : 'max-h-0 opacity-0'}`}
               ref={formContainerRef}
               onTransitionEnd={handleAnimationEnd}
             >

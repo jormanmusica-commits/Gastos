@@ -59,6 +59,17 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
     }
   }, [minDate, date, transactionType]);
 
+  useEffect(() => {
+    if (step === 'details') {
+        // Small delay to ensure the input is rendered and visible before focusing.
+        // This is more reliable for triggering the native keyboard on mobile devices.
+        const timer = setTimeout(() => {
+            descriptionInputRef.current?.focus();
+        }, 100);
+        return () => clearTimeout(timer);
+    }
+  }, [step]);
+
   const isIncome = transactionType === 'income';
 
   const handleSubmit = (e?: React.FormEvent) => {
@@ -87,11 +98,6 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
     }
     setError('');
     setStep('details');
-    // Focus the description input on the next animation frame,
-    // ensuring the element is rendered and ready. This reliably triggers the native keyboard.
-    requestAnimationFrame(() => {
-        descriptionInputRef.current?.focus();
-    });
   };
   
   const config = isIncome
