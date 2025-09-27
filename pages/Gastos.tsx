@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 // FIX: Import Category and FixedExpense types
-import { Page, Profile, Category, FixedExpense } from '../types';
+import { Page, Profile, Category, FixedExpense, QuickExpense } from '../types';
 import TransactionForm from '../components/TransactionForm';
 import Summary from '../components/Summary';
 import CategoryModal from '../components/CategoryModal';
@@ -10,6 +10,8 @@ import BankIcon from '../components/icons/BankIcon';
 import FixedExpenseModal from '../components/FixedExpenseModal';
 import BoltIcon from '../components/icons/BoltIcon';
 import PayFixedExpenseModal from '../components/PayFixedExpenseModal';
+import PayQuickExpenseModal from '../components/PayQuickExpenseModal';
+import CategoryIcon from '../components/CategoryIcon';
 
 const CASH_METHOD_ID = 'efectivo';
 
@@ -27,6 +29,7 @@ interface GastosProps {
   onDeleteBankAccount: (id: string) => void;
   onAddFixedExpense: (name: string, amount: number, categoryId?: string) => void;
   onDeleteFixedExpense: (id: string) => void;
+  onAddQuickExpense: (name: string, amount: number, categoryId: string | undefined, icon: string) => void;
   minDateForExpenses?: string;
   onInitiateTransfer: (fromAccountId: string) => void;
   onOpenGiftModal: (expense: FixedExpense) => void;
@@ -37,11 +40,12 @@ const Gastos: React.FC<GastosProps> = ({
     onAddCategory, onUpdateCategory, onDeleteCategory,
     onAddBankAccount, onUpdateBankAccount, onDeleteBankAccount,
     onAddFixedExpense, onDeleteFixedExpense,
+    onAddQuickExpense,
     minDateForExpenses,
     onInitiateTransfer,
     onOpenGiftModal
 }) => {
-    const { data: { categories, bankAccounts, fixedExpenses, transactions }, currency } = profile;
+    const { data: { categories, bankAccounts, fixedExpenses, quickExpenses, transactions }, currency } = profile;
     const [activeMethodId, setActiveMethodId] = useState<string | null>(null);
     const [isFormVisible, setIsFormVisible] = useState(false);
     const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
@@ -49,7 +53,8 @@ const Gastos: React.FC<GastosProps> = ({
     const [isBankSelectionModalOpen, setIsBankSelectionModalOpen] = useState(false);
     const [selectedCategoryId, setSelectedCategoryId] = useState<string | undefined>();
     const [isFixedExpenseModalOpen, setIsFixedExpenseModalOpen] = useState(false);
-    const [expenseToPay, setExpenseToPay] = useState<FixedExpense | null>(null);
+    const [fixedExpenseToPay, setFixedExpenseToPay] = useState<FixedExpense | null>(null);
+    const [quickExpenseToPay, setQuickExpenseToPay] = useState<QuickExpense | null>(null);
     const formContainerRef = useRef<HTMLDivElement>(null);
 
     const bankBalance = Object.entries(balancesByMethod)
@@ -86,11 +91,15 @@ const Gastos: React.FC<GastosProps> = ({
       handleSelectMethod(bankId);
     };
 
-    const handleFormSubmit = (description: string, amount: number, date: string, categoryId?: string, addAsFixed?: boolean) => {
+    const handleFormSubmit = (description: string, amount: number, date: string, categoryId?: string, options?: { addAsFixed?: boolean; addAsQuick?: boolean; }) => {
         if (activeMethodId) {
           onAddTransaction(description, amount, date, 'expense', activeMethodId, categoryId);
-          if (addAsFixed) {
+          if (options?.addAsFixed) {
             onAddFixedExpense(description, amount, categoryId);
+          }
+           if (options?.addAsQuick) {
+            const category = categories.find(c => c.id === categoryId);
+            onAddQuickExpense(description, amount, categoryId, category?.icon || '⚡️');
           }
           setIsFormVisible(false);
         }
@@ -110,10 +119,10 @@ const Gastos: React.FC<GastosProps> = ({
 
     const handleSelectFixedExpense = (expense: FixedExpense) => {
         setIsFixedExpenseModalOpen(false);
-        setExpenseToPay(expense);
+        setFixedExpenseToPay(expense);
     };
 
-    const handleConfirmPayment = (expense: FixedExpense, date: string, paymentMethodId: string) => {
+     const handleConfirmFixedPayment = (expense: FixedExpense, date: string, paymentMethodId: string) => {
         onAddTransaction(
             expense.name,
             expense.amount,
@@ -122,12 +131,41 @@ const Gastos: React.FC<GastosProps> = ({
             paymentMethodId,
             expense.categoryId
         );
-        setExpenseToPay(null);
+        setFixedExpenseToPay(null);
     };
+
+    const handleConfirmQuickPayment = (expense: QuickExpense, paymentMethodId: string) => {
+      const today = new Date().toISOString().split('T')[0];
+
+      if (minDateForExpenses && today < minDateForExpenses) {
+          alert(`No puedes registrar un gasto en una fecha anterior a tu primer ingreso.`);
+          return;
+      }
+  
+      onAddTransaction(
+          expense.name,
+          expense.amount,
+          today,
+          'expense',
+          paymentMethodId,
+          expense.categoryId
+      );
+      setQuickExpenseToPay(null);
+  };
 
     const handleOpenGiftModal = (expense: FixedExpense) => {
         setIsFixedExpenseModalOpen(false);
         onOpenGiftModal(expense);
+    };
+
+    const formatCurrency = (amount: number) => {
+      const locale = currency === 'COP' ? 'es-CO' : (currency === 'CLP' ? 'es-CL' : 'es-ES');
+      return new Intl.NumberFormat(locale, {
+        style: 'currency',
+        currency: currency,
+        minimumFractionDigits: amount % 1 === 0 ? 0 : 2,
+        maximumFractionDigits: 2,
+      }).format(amount);
     };
 
     return (
@@ -156,15 +194,33 @@ const Gastos: React.FC<GastosProps> = ({
 
               <div className="space-y-6">
                 <div>
-                  <div className="mb-4">
-                    <button
-                      type="button"
-                      onClick={() => setIsFixedExpenseModalOpen(true)}
-                      className="w-full flex items-center justify-center gap-2 text-sm font-semibold text-amber-600 dark:text-amber-400 py-2 px-4 rounded-lg border-2 border-dashed border-amber-400/50 dark:border-amber-600/50 hover:bg-amber-500/10 transition-colors"
-                    >
-                      <BoltIcon className="w-4 h-4" />
-                      Añadir desde Gastos Fijos
-                    </button>
+                    <div className="mb-4 space-y-3">
+                        {quickExpenses.length > 0 && (
+                            <div>
+                                <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-2">Gastos Rápidos</h3>
+                                <div className="flex space-x-3 overflow-x-auto pb-2 -mx-4 px-4">
+                                    {quickExpenses.map(qe => (
+                                        <button 
+                                            key={qe.id}
+                                            onClick={() => setQuickExpenseToPay(qe)}
+                                            className="flex-shrink-0 flex flex-col items-center justify-center w-24 h-24 bg-gray-100 dark:bg-gray-700/50 rounded-xl p-2 text-center transition-transform hover:scale-105"
+                                        >
+                                            <CategoryIcon iconName={qe.icon} className="text-3xl" />
+                                            <span className="text-xs font-semibold truncate w-full mt-1 text-gray-800 dark:text-gray-200">{qe.name}</span>
+                                            <span className="text-xs font-bold text-red-500">{formatCurrency(qe.amount)}</span>
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => setIsFixedExpenseModalOpen(true)}
+                          className="w-full flex items-center justify-center gap-2 text-sm font-semibold text-amber-600 dark:text-amber-400 py-2 px-4 rounded-lg border-2 border-dashed border-amber-400/50 dark:border-amber-600/50 hover:bg-amber-500/10 transition-colors"
+                        >
+                          <BoltIcon className="w-4 h-4" />
+                          Añadir desde Gastos Fijos
+                        </button>
                   </div>
                   <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-3">
                     O selecciona un método para un nuevo gasto
@@ -254,14 +310,23 @@ const Gastos: React.FC<GastosProps> = ({
           onOpenGiftModal={handleOpenGiftModal}
         />
         <PayFixedExpenseModal
-            isOpen={!!expenseToPay}
-            onClose={() => setExpenseToPay(null)}
-            expense={expenseToPay}
+            isOpen={!!fixedExpenseToPay}
+            onClose={() => setFixedExpenseToPay(null)}
+            expense={fixedExpenseToPay}
             bankAccounts={bankAccounts}
             balancesByMethod={balancesByMethod}
-            onConfirm={handleConfirmPayment}
+            onConfirm={handleConfirmFixedPayment}
             currency={currency}
             minDateForExpenses={minDateForExpenses}
+        />
+         <PayQuickExpenseModal
+            isOpen={!!quickExpenseToPay}
+            onClose={() => setQuickExpenseToPay(null)}
+            expense={quickExpenseToPay}
+            bankAccounts={bankAccounts}
+            balancesByMethod={balancesByMethod}
+            onConfirm={handleConfirmQuickPayment}
+            currency={currency}
         />
       </>
     );

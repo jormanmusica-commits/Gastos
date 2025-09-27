@@ -24,6 +24,7 @@ interface AjustesProps {
   onExportAllDataToJson: () => void;
   onImportDataFromJson: (file: File) => void;
   onManageFixedExpenses: () => void;
+  onManageQuickExpenses: () => void;
 }
 
 const Ajustes: React.FC<AjustesProps> = ({ 
@@ -33,7 +34,8 @@ const Ajustes: React.FC<AjustesProps> = ({
     onExportData,
     onExportAllDataToJson,
     onImportDataFromJson,
-    onManageFixedExpenses
+    onManageFixedExpenses,
+    onManageQuickExpenses
 }) => {
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [isBankAccountModalOpen, setIsBankAccountModalOpen] = useState(false);
@@ -110,6 +112,14 @@ const Ajustes: React.FC<AjustesProps> = ({
                   className="w-full text-left font-medium text-gray-700 dark:text-gray-300"
                 >
                   Gestionar Gastos Fijos
+                </button>
+              </div>
+               <div className="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-gray-700">
+                <button
+                  onClick={onManageQuickExpenses}
+                  className="w-full text-left font-medium text-gray-700 dark:text-gray-300"
+                >
+                  Gestionar Gastos Rápidos
                 </button>
               </div>
               <div className="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-gray-700">

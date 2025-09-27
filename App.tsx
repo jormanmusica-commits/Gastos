@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { Theme, Transaction, Page, Category, BankAccount, FixedExpense, Profile, ProfileData, Asset, Liability, Loan, ExportSummary, ExportPayload } from './types';
+import { Theme, Transaction, Page, Category, BankAccount, FixedExpense, Profile, ProfileData, Asset, Liability, Loan, ExportSummary, ExportPayload, QuickExpense } from './types';
 import Inicio from './pages/Inicio';
 import Resumen from './pages/Resumen';
 import Ajustes from './pages/Ajustes';
@@ -33,20 +33,28 @@ import EditDebtAdditionModal from './components/EditDebtAdditionModal';
 import SpendSavingsModal from './components/SpendSavingsModal';
 import GiftFixedExpenseModal from './components/GiftFixedExpenseModal';
 import SwitchIcon from './components/icons/SwitchIcon';
+import QuickExpenseModal from './components/QuickExpenseModal';
 
 
 const CASH_METHOD_ID = 'efectivo';
 
 const defaultCategories: Category[] = [
-  { id: '1', name: 'Comida', icon: '🍔' },
-  { id: '2', name: 'Transporte', icon: '🚗' },
-  { id: '3', name: 'Ropa', icon: '👕' },
-  { id: '4', name: 'Hogar', icon: '🏠' },
-  { id: '5', name: 'Entretenimiento', icon: '🎬' },
-  { id: '6', name: 'Salud', icon: '❤️‍🩹' },
-  { id: '8', name: 'Ahorro', icon: '💰' },
-  { id: '9', name: 'Préstamos', icon: '🏦' },
-  { id: '7', name: 'General', icon: '🧾' },
+    { id: '1', name: 'Comida', icon: '🍔' },
+    { id: '2', name: 'Transporte', icon: '🚗' },
+    { id: '13', name: 'Compras', icon: '🛒' },
+    { id: '4', name: 'Hogar', icon: '🏠' },
+    { id: '16', name: 'Facturas', icon: '📄' },
+    { id: '12', name: 'Suscripciones', icon: '🔄' },
+    { id: '5', name: 'Entretenimiento', icon: '🎬' },
+    { id: '15', name: 'Belleza', icon: '💄' },
+    { id: '3', name: 'Ropa', icon: '👕' },
+    { id: '6', name: 'Salud', icon: '❤️‍🩹' },
+    { id: '14', name: 'Mascotas', icon: '🐾' },
+    { id: '11', name: 'Educación', icon: '🎓' },
+    { id: '10', name: 'Viajes', icon: '✈️' },
+    { id: '8', name: 'Ahorro', icon: '💰' },
+    { id: '9', name: 'Préstamos', icon: '🏦' },
+    { id: '7', name: 'General', icon: '🧾' },
 ];
 
 const defaultBankAccounts: BankAccount[] = [
@@ -58,6 +66,7 @@ const createDefaultProfileData = (): ProfileData => ({
     bankAccounts: defaultBankAccounts,
     categories: defaultCategories,
     fixedExpenses: [],
+    quickExpenses: [],
     assets: [],
     liabilities: [],
     loans: [],
@@ -242,6 +251,7 @@ const App: React.FC = () => {
             ...p,
             data: {
                 ...p.data,
+                quickExpenses: p.data.quickExpenses || [],
                 liabilities: (p.data.liabilities || []).map((l: Liability) => ({
                     ...l,
                     originalAmount: (l as any).originalAmount || l.amount,
@@ -279,7 +289,7 @@ const App: React.FC = () => {
             currency: 'EUR',
             data: { 
                 transactions, bankAccounts, categories, fixedExpenses, 
-                assets: [], liabilities: [], loans: []
+                assets: [], liabilities: [], loans: [], quickExpenses: []
             }
         };
         return [migratedProfile];
@@ -310,6 +320,7 @@ const App: React.FC = () => {
   const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
   const [isProfileCreationModalOpen, setIsProfileCreationModalOpen] = useState(false);
   const [isFixedExpenseModalOpen, setIsFixedExpenseModalOpen] = useState(false);
+  const [isQuickExpenseModalOpen, setIsQuickExpenseModalOpen] = useState(false);
   const [isAssetLiabilityModalOpen, setIsAssetLiabilityModalOpen] = useState(false);
   const [isSpendSavingsModalOpen, setIsSpendSavingsModalOpen] = useState(false);
   const [payingDebt, setPayingDebt] = useState<Liability | null>(null);
@@ -613,6 +624,28 @@ const App: React.FC = () => {
     updateActiveProfileData(data => ({ ...data, transactions: updatedTransactions }));
     setGiftingFixedExpense(null); // Close modal
   }, [activeProfile, updateActiveProfileData]);
+
+  const handleAddQuickExpense = useCallback((name: string, amount: number, categoryId: string | undefined, icon: string) => {
+    if (!activeProfile) return;
+    // Check if a quick expense with the same name already exists to avoid duplicates
+    if (activeProfile.data.quickExpenses.some(qe => qe.name.toLowerCase() === name.toLowerCase())) {
+        // Optionally alert the user, or just silently ignore. For now, we ignore.
+        return;
+    }
+    const newQuickExpense: QuickExpense = { id: crypto.randomUUID(), name, amount, categoryId, icon };
+    updateActiveProfileData(data => ({ ...data, quickExpenses: [...(data.quickExpenses || []), newQuickExpense] }));
+  }, [activeProfile, updateActiveProfileData]);
+
+  const handleUpdateQuickExpense = useCallback((id: string, name: string, amount: number, categoryId: string | undefined, icon: string) => {
+    updateActiveProfileData(data => ({
+        ...data,
+        quickExpenses: data.quickExpenses.map(qe => qe.id === id ? { id, name, amount, categoryId, icon } : qe)
+    }));
+  }, [updateActiveProfileData]);
+
+  const handleDeleteQuickExpense = useCallback((id: string) => {
+    updateActiveProfileData(data => ({ ...data, quickExpenses: data.quickExpenses.filter(qe => qe.id !== id) }));
+  }, [updateActiveProfileData]);
 
   // FIX: Moved useMemo for balances before its use in handleCreateSaving
   const { balance, balancesByMethod } = useMemo(() => {
@@ -1402,6 +1435,7 @@ const App: React.FC = () => {
               onExportAllDataToJson={handleExportAllDataToJson}
               onImportDataFromJson={handleImportDataFromJson}
               onManageFixedExpenses={() => setIsFixedExpenseModalOpen(true)}
+              onManageQuickExpenses={() => setIsQuickExpenseModalOpen(true)}
           /> }
           { currentPage === 'ingresos' && <Ingresos
               profile={activeProfile}
@@ -1428,6 +1462,7 @@ const App: React.FC = () => {
               onDeleteBankAccount={handleDeleteBankAccount}
               onAddFixedExpense={handleAddFixedExpense}
               onDeleteFixedExpense={handleDeleteFixedExpense}
+              onAddQuickExpense={handleAddQuickExpense}
               minDateForExpenses={minDateForExpenses}
               onInitiateTransfer={handleInitiateTransfer}
               onOpenGiftModal={setGiftingFixedExpense}
@@ -1500,6 +1535,19 @@ const App: React.FC = () => {
             categories={activeProfile.data.categories}
             onAddFixedExpense={handleAddFixedExpense}
             onDeleteFixedExpense={handleDeleteFixedExpense}
+            currency={activeProfile.currency}
+            onAddCategory={handleAddCategory}
+            onUpdateCategory={handleUpdateCategory}
+            onDeleteCategory={handleDeleteCategory}
+        />
+        <QuickExpenseModal
+            isOpen={isQuickExpenseModalOpen}
+            onClose={() => setIsQuickExpenseModalOpen(false)}
+            quickExpenses={activeProfile.data.quickExpenses}
+            categories={activeProfile.data.categories}
+            onAddQuickExpense={handleAddQuickExpense}
+            onUpdateQuickExpense={handleUpdateQuickExpense}
+            onDeleteQuickExpense={handleDeleteQuickExpense}
             currency={activeProfile.currency}
             onAddCategory={handleAddCategory}
             onUpdateCategory={handleUpdateCategory}

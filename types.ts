@@ -35,6 +35,14 @@ export interface FixedExpense {
   categoryId?: string;
 }
 
+export interface QuickExpense {
+  id: string;
+  name: string;
+  amount: number;
+  categoryId?: string;
+  icon: string;
+}
+
 export interface Asset {
   id: string;
   name: string;
@@ -70,6 +78,7 @@ export interface ProfileData {
   bankAccounts: BankAccount[];
   categories: Category[];
   fixedExpenses: FixedExpense[];
+  quickExpenses: QuickExpense[];
   assets: Asset[];
   liabilities: Liability[];
   loans: Loan[];
