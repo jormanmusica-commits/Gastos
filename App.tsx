@@ -316,6 +316,7 @@ const App: React.FC = () => {
   const [activeProfileId, setActiveProfileId] = useState<string | null>(null);
   
   const [currentPage, setCurrentPage] = useState<Page>('inicio');
+  const [navigationHistory, setNavigationHistory] = useState<Page[]>([]);
   const [initialTransferFromId, setInitialTransferFromId] = useState<string | null>(null);
   const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
   const [isProfileCreationModalOpen, setIsProfileCreationModalOpen] = useState(false);
@@ -396,6 +397,65 @@ const App: React.FC = () => {
         localStorage.removeItem('fixedExpenses');
     }
   }, [profiles]);
+  
+    // =======================================================
+    // START: Gesture and Navigation History Logic
+    // =======================================================
+    const touchStartX = useRef(0);
+    const touchEndX = useRef(0);
+    const MIN_SWIPE_DISTANCE = 50; // Minimum pixels for a valid swipe
+
+    const handleNavigate = useCallback((page: Page) => {
+        if (page === currentPage) return;
+        setNavigationHistory(prev => [...prev, page]);
+        setCurrentPage(page);
+    }, [currentPage]);
+
+    const handleGoBack = useCallback(() => {
+        if (navigationHistory.length > 1) {
+            const newHistory = [...navigationHistory];
+            newHistory.pop();
+            const previousPage = newHistory[newHistory.length - 1];
+            
+            setCurrentPage(previousPage);
+            setNavigationHistory(newHistory);
+        } else {
+            setActiveProfileId(null);
+            setCurrentPage('inicio');
+            setNavigationHistory([]);
+        }
+    }, [navigationHistory]);
+
+    const handleTouchStart = (e: React.TouchEvent) => {
+        const target = e.target as HTMLElement;
+        if (target.closest('button, input, select, textarea, a[href]')) {
+            touchStartX.current = 0;
+            return;
+        }
+        touchStartX.current = e.targetTouches[0].clientX;
+        touchEndX.current = 0;
+    };
+
+    const handleTouchMove = (e: React.TouchEvent) => {
+        if (touchStartX.current === 0) return;
+        touchEndX.current = e.targetTouches[0].clientX;
+    };
+
+    const handleTouchEnd = () => {
+        if (touchStartX.current === 0 || touchEndX.current === 0) return;
+        
+        const distance = touchEndX.current - touchStartX.current;
+        
+        if (distance > MIN_SWIPE_DISTANCE) {
+            handleGoBack();
+        }
+
+        touchStartX.current = 0;
+        touchEndX.current = 0;
+    };
+    // =======================================================
+    // END: Gesture and Navigation History Logic
+    // =======================================================
 
   const updateActiveProfileData = useCallback((updater: (data: ProfileData) => ProfileData) => {
     if (!activeProfileId) return;
@@ -1348,8 +1408,8 @@ const App: React.FC = () => {
         { label: 'Préstamo', icon: <ScaleIcon className="w-6 h-6"/>, onClick: handlePrestamoClick, color: '#3b82f6' }
     ], [handleAhorroClick, handleDeudaClick, handlePrestamoClick]);
 
-    const handleGastoClick = useCallback(() => setCurrentPage('gastos'), []);
-    const handleIngresoClick = useCallback(() => setCurrentPage('ingresos'), []);
+    const handleGastoClick = useCallback(() => handleNavigate('gastos'), [handleNavigate]);
+    const handleIngresoClick = useCallback(() => handleNavigate('ingresos'), [handleNavigate]);
 
     const resumenMenuItems: MenuItem[] = useMemo(() => [
         { label: 'Gasto', icon: <ArrowDownIcon className="w-6 h-6"/>, onClick: handleGastoClick, color: '#ef4444' },
@@ -1376,6 +1436,7 @@ const App: React.FC = () => {
     const handleGoHome = useCallback(() => {
         setActiveProfileId(null);
         setCurrentPage('inicio');
+        setNavigationHistory([]);
     }, []);
 
     if (!activeProfileId || !activeProfile) {
@@ -1386,6 +1447,7 @@ const App: React.FC = () => {
               onSelectProfile={(id) => {
                 setActiveProfileId(id);
                 setCurrentPage('resumen');
+                setNavigationHistory(['resumen']);
               }}
               onAddProfile={() => setIsProfileCreationModalOpen(true)}
               onDeleteProfile={handleDeleteProfile}
@@ -1401,119 +1463,124 @@ const App: React.FC = () => {
         );
     }
 
+    const isAnyModalOpen = isTransferModalOpen || isProfileCreationModalOpen || isFixedExpenseModalOpen || isQuickExpenseModalOpen || isAssetLiabilityModalOpen || isSpendSavingsModalOpen || !!payingDebt || !!repayingLoan || !!addingValueToLoan || !!editingLoan || !!viewingLoan || !!editingLoanAddition || !!addingValueToDebt || !!editingDebt || !!viewingDebt || !!editingDebtAddition || !!giftingFixedExpense;
+
   return (
-    <div className={`app-container ${theme}`}>
-      <div className="flex flex-col min-h-screen">
-        <main className="flex-grow container mx-auto px-4 pt-12 pb-24 max-w-3xl">
-          { (currentPage === 'inicio' || currentPage === 'resumen') && <Resumen 
-              profile={activeProfile}
-              balance={balance}
-              balancesByMethod={balancesByMethod}
-              onDeleteTransaction={handleDeleteTransaction}
-              onInitiateTransfer={handleInitiateTransfer}
-              monthlyIncome={monthlyIncome}
-              monthlyExpenses={monthlyExpenses}
-              monthlyIncomeByBank={monthlyIncomeByBank}
-              monthlyIncomeByCash={monthlyIncomeByCash}
-              monthlyExpensesByBank={monthlyExpensesByBank}
-              monthlyExpensesByCash={monthlyExpensesByCash}
-              totalIncome={totalIncome}
-              totalExpenses={totalExpenses}
-          /> }
-          { currentPage === 'ajustes' && <Ajustes 
-              theme={theme}
-              onToggleTheme={handleToggleTheme}
-              categories={activeProfile.data.categories}
-              onAddCategory={handleAddCategory}
-              onUpdateCategory={handleUpdateCategory}
-              onDeleteCategory={handleDeleteCategory}
-              bankAccounts={activeProfile.data.bankAccounts}
-              onAddBankAccount={handleAddBankAccount}
-              onUpdateBankAccount={handleUpdateBankAccount}
-              onDeleteBankAccount={handleDeleteBankAccount}
-              onExportData={handleExportData}
-              onExportAllDataToJson={handleExportAllDataToJson}
-              onImportDataFromJson={handleImportDataFromJson}
-              onManageFixedExpenses={() => setIsFixedExpenseModalOpen(true)}
-              onManageQuickExpenses={() => setIsQuickExpenseModalOpen(true)}
-          /> }
-          { currentPage === 'ingresos' && <Ingresos
-              profile={activeProfile}
-              balance={balance}
-              balancesByMethod={balancesByMethod}
-              onAddTransaction={handleAddTransaction}
-              onNavigate={setCurrentPage}
-              onAddBankAccount={handleAddBankAccount}
-              onUpdateBankAccount={handleUpdateBankAccount}
-              onDeleteBankAccount={handleDeleteBankAccount}
-              onInitiateTransfer={handleInitiateTransfer}
-          /> }
-           { currentPage === 'gastos' && <Gastos
-              profile={activeProfile}
-              balance={balance}
-              balancesByMethod={balancesByMethod}
-              onAddTransaction={handleAddTransaction}
-              onNavigate={setCurrentPage}
-              onAddCategory={handleAddCategory}
-              onUpdateCategory={handleUpdateCategory}
-              onDeleteCategory={handleDeleteCategory}
-              onAddBankAccount={handleAddBankAccount}
-              onUpdateBankAccount={handleUpdateBankAccount}
-              onDeleteBankAccount={handleDeleteBankAccount}
-              onAddFixedExpense={handleAddFixedExpense}
-              onDeleteFixedExpense={handleDeleteFixedExpense}
-              onAddQuickExpense={handleAddQuickExpense}
-              minDateForExpenses={minDateForExpenses}
-              onInitiateTransfer={handleInitiateTransfer}
-              onOpenGiftModal={setGiftingFixedExpense}
-          /> }
-           { currentPage === 'patrimonio' && <Patrimonio
+    <div
+        className={`app-container ${theme}`}
+        onTouchStart={!isAnyModalOpen && activeProfileId ? handleTouchStart : undefined}
+        onTouchMove={!isAnyModalOpen && activeProfileId ? handleTouchMove : undefined}
+        onTouchEnd={!isAnyModalOpen && activeProfileId ? handleTouchEnd : undefined}
+    >
+        <main className="container mx-auto px-4 pt-12 pb-24 max-w-3xl min-h-[calc(100vh-80px)]">
+            { (currentPage === 'inicio' || currentPage === 'resumen') && <Resumen 
                 profile={activeProfile}
-                manualAssetsValue={manualAssetsValue}
-                totalLiabilities={totalLiabilitiesValue}
-                totalLoans={totalLoansValue}
-                assets={activeProfile.data.assets || []}
-                liabilities={activeProfile.data.liabilities || []}
-                loans={activeProfile.data.loans || []}
+                balance={balance}
+                balancesByMethod={balancesByMethod}
+                onDeleteTransaction={handleDeleteTransaction}
+                onInitiateTransfer={handleInitiateTransfer}
+                monthlyIncome={monthlyIncome}
+                monthlyExpenses={monthlyExpenses}
+                monthlyIncomeByBank={monthlyIncomeByBank}
+                monthlyIncomeByCash={monthlyIncomeByCash}
+                monthlyExpensesByBank={monthlyExpensesByBank}
+                monthlyExpensesByCash={monthlyExpensesByCash}
+                totalIncome={totalIncome}
+                totalExpenses={totalExpenses}
+            /> }
+            { currentPage === 'ajustes' && <Ajustes 
+                theme={theme}
+                onToggleTheme={handleToggleTheme}
+                categories={activeProfile.data.categories}
+                onAddCategory={handleAddCategory}
+                onUpdateCategory={handleUpdateCategory}
+                onDeleteCategory={handleDeleteCategory}
                 bankAccounts={activeProfile.data.bankAccounts}
-                onDeleteAsset={() => {}}
-                onDeleteLiability={() => {}}
-                onDeleteLoan={() => {}}
-                onNavigate={setCurrentPage}
-                onOpenSpendSavingsModal={() => setIsSpendSavingsModalOpen(true)}
-           /> }
-            { currentPage === 'prestamos' && <Loans
-                profile={activeProfile}
-                loans={activeProfile.data.loans || []}
-                transactions={activeProfile.data.transactions}
-                onOpenLoanRepaymentModal={setRepayingLoan}
-                onOpenAddValueToLoanModal={setAddingValueToLoan}
-                onOpenEditLoanModal={setEditingLoan}
-                onOpenLoanDetailModal={setViewingLoan}
-                onNavigate={setCurrentPage}
-                currency={activeProfile.currency}
+                onAddBankAccount={handleAddBankAccount}
+                onUpdateBankAccount={handleUpdateBankAccount}
+                onDeleteBankAccount={handleDeleteBankAccount}
+                onExportData={handleExportData}
+                onExportAllDataToJson={handleExportAllDataToJson}
+                onImportDataFromJson={handleImportDataFromJson}
+                onManageFixedExpenses={() => setIsFixedExpenseModalOpen(true)}
+                onManageQuickExpenses={() => setIsQuickExpenseModalOpen(true)}
             /> }
-            { currentPage === 'deudas' && <Deudas
+            { currentPage === 'ingresos' && <Ingresos
                 profile={activeProfile}
-                liabilities={activeProfile.data.liabilities || []}
-                onOpenDebtPaymentModal={setPayingDebt}
-                onOpenAddValueToDebtModal={setAddingValueToDebt}
-                onOpenEditDebtModal={setEditingDebt}
-                onOpenDebtDetailModal={setViewingDebt}
-                onNavigate={setCurrentPage}
-                currency={activeProfile.currency}
+                balance={balance}
+                balancesByMethod={balancesByMethod}
+                onAddTransaction={handleAddTransaction}
+                onNavigate={handleNavigate}
+                onAddBankAccount={handleAddBankAccount}
+                onUpdateBankAccount={handleUpdateBankAccount}
+                onDeleteBankAccount={handleDeleteBankAccount}
+                onInitiateTransfer={handleInitiateTransfer}
             /> }
-            { currentPage === 'ahorros' && <Ahorros
+            { currentPage === 'gastos' && <Gastos
                 profile={activeProfile}
-                savingsBySource={savingsBySource}
-                onNavigate={setCurrentPage}
-                onOpenSpendSavingsModal={() => setIsSpendSavingsModalOpen(true)}
-                currency={activeProfile.currency}
-                manualAssetsValue={manualAssetsValue}
+                balance={balance}
+                balancesByMethod={balancesByMethod}
+                onAddTransaction={handleAddTransaction}
+                onNavigate={handleNavigate}
+                onAddCategory={handleAddCategory}
+                onUpdateCategory={handleUpdateCategory}
+                onDeleteCategory={handleDeleteCategory}
+                onAddBankAccount={handleAddBankAccount}
+                onUpdateBankAccount={handleUpdateBankAccount}
+                onDeleteBankAccount={handleDeleteBankAccount}
+                onAddFixedExpense={handleAddFixedExpense}
+                onDeleteFixedExpense={handleDeleteFixedExpense}
+                onAddQuickExpense={handleAddQuickExpense}
+                minDateForExpenses={minDateForExpenses}
+                onInitiateTransfer={handleInitiateTransfer}
+                onOpenGiftModal={setGiftingFixedExpense}
             /> }
-        </main>
-        <BottomNav currentPage={currentPage} onNavigate={setCurrentPage} onGoHome={handleGoHome} />
-      </div>
+            { currentPage === 'patrimonio' && <Patrimonio
+                    profile={activeProfile}
+                    manualAssetsValue={manualAssetsValue}
+                    totalLiabilities={totalLiabilitiesValue}
+                    totalLoans={totalLoansValue}
+                    assets={activeProfile.data.assets || []}
+                    liabilities={activeProfile.data.liabilities || []}
+                    loans={activeProfile.data.loans || []}
+                    bankAccounts={activeProfile.data.bankAccounts}
+                    onDeleteAsset={() => {}}
+                    onDeleteLiability={() => {}}
+                    onDeleteLoan={() => {}}
+                    onNavigate={handleNavigate}
+                    onOpenSpendSavingsModal={() => setIsSpendSavingsModalOpen(true)}
+            /> }
+                { currentPage === 'prestamos' && <Loans
+                    profile={activeProfile}
+                    loans={activeProfile.data.loans || []}
+                    transactions={activeProfile.data.transactions}
+                    onOpenLoanRepaymentModal={setRepayingLoan}
+                    onOpenAddValueToLoanModal={setAddingValueToLoan}
+                    onOpenEditLoanModal={setEditingLoan}
+                    onOpenLoanDetailModal={setViewingLoan}
+                    onNavigate={handleNavigate}
+                    currency={activeProfile.currency}
+                /> }
+                { currentPage === 'deudas' && <Deudas
+                    profile={activeProfile}
+                    liabilities={activeProfile.data.liabilities || []}
+                    onOpenDebtPaymentModal={setPayingDebt}
+                    onOpenAddValueToDebtModal={setAddingValueToDebt}
+                    onOpenEditDebtModal={setEditingDebt}
+                    onOpenDebtDetailModal={setViewingDebt}
+                    onNavigate={handleNavigate}
+                    currency={activeProfile.currency}
+                /> }
+                { currentPage === 'ahorros' && <Ahorros
+                    profile={activeProfile}
+                    savingsBySource={savingsBySource}
+                    onNavigate={handleNavigate}
+                    onOpenSpendSavingsModal={() => setIsSpendSavingsModalOpen(true)}
+                    currency={activeProfile.currency}
+                    manualAssetsValue={manualAssetsValue}
+                /> }
+            </main>
+            <BottomNav currentPage={currentPage} onNavigate={handleNavigate} onGoHome={handleGoHome} />
         <TransferModal 
             isOpen={isTransferModalOpen}
             onClose={() => {
