@@ -89,9 +89,10 @@ interface FloatingActionButtonProps {
   ringColorClass: string;
   position: { x: number, y: number };
   onPositionChange: (position: { x: number, y: number }) => void;
+  safeAreaBottomPx: number;
 }
 
-const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({ menuItems, buttonClass, ringColorClass, position, onPositionChange }) => {
+const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({ menuItems, buttonClass, ringColorClass, position, onPositionChange, safeAreaBottomPx }) => {
   const [isAddMenuOpen, setIsAddMenuOpen] = useState(false);
   const fabRef = useRef<HTMLButtonElement>(null);
   const dragInfo = useRef({ isDragging: false, offsetX: 0, offsetY: 0, moved: false });
@@ -121,17 +122,18 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({ menuItems, 
     const event = 'touches' in e ? e.touches[0] : e;
     const fabSize = 80;
     const margin = 8;
-    const bottomNavHeight = 80;
+    const bottomNavBaseHeight = 80;
+    const totalNavHeight = bottomNavBaseHeight + safeAreaBottomPx;
 
     let newX = event.clientX - dragInfo.current.offsetX;
     let newY = event.clientY - dragInfo.current.offsetY;
 
     // Limitar al área visible
     newX = Math.max(margin, Math.min(newX, window.innerWidth - fabSize - margin));
-    newY = Math.max(margin, Math.min(newY, window.innerHeight - fabSize - margin - bottomNavHeight));
+    newY = Math.max(margin, Math.min(newY, window.innerHeight - fabSize - margin - totalNavHeight));
 
     onPositionChange({ x: newX, y: newY });
-  }, [onPositionChange]);
+  }, [onPositionChange, safeAreaBottomPx]);
 
   const handleDragEnd = useCallback(() => {
     document.removeEventListener('mousemove', handleDragMove);
@@ -373,17 +375,35 @@ const App: React.FC = () => {
 
   const activeProfile = useMemo(() => profiles.find(p => p.id === activeProfileId), [profiles, activeProfileId]);
 
-    const getDefaultFabPosition = useCallback(() => ({
-    x: window.innerWidth - 88, // 80px width + 8px margin
-    y: window.innerHeight - 176, // 80px height + 80px bottom nav + 16px margin
-  }), []);
+  const [safeAreaBottomPx, setSafeAreaBottomPx] = useState(0);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const sabValue = getComputedStyle(document.documentElement).getPropertyValue('--sab');
+      if (sabValue) {
+        setSafeAreaBottomPx(parseInt(sabValue, 10) || 0);
+      }
+    }, 100);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const getDefaultFabPosition = useCallback(() => {
+    const fabSize = 80;
+    const margin = 8;
+    const bottomNavBaseHeight = 80;
+    const totalNavHeight = bottomNavBaseHeight + safeAreaBottomPx;
+    return {
+      x: window.innerWidth - (fabSize + margin),
+      y: window.innerHeight - (fabSize + totalNavHeight + margin * 2),
+    };
+  }, [safeAreaBottomPx]);
 
   const [fabPosition, setFabPosition] = useState(() => {
     try {
       const savedPosition = localStorage.getItem('fabPosition');
       if (savedPosition) return JSON.parse(savedPosition);
     } catch (e) { console.error("Failed to parse FAB position", e); }
-    return getDefaultFabPosition();
+    return { x: window.innerWidth - 88, y: window.innerHeight - 176 };
   });
 
   useEffect(() => {
@@ -395,18 +415,19 @@ const App: React.FC = () => {
         setFabPosition(currentPos => {
             const fabSize = 80;
             const margin = 8;
-            const bottomNavHeight = 80;
+            const bottomNavBaseHeight = 80;
+            const totalNavHeight = bottomNavBaseHeight + safeAreaBottomPx;
             
-            // Simplemente mantener dentro de los límites, sin ajustar a los bordes.
             const newX = Math.max(margin, Math.min(currentPos.x, window.innerWidth - fabSize - margin));
-            const newY = Math.max(margin, Math.min(currentPos.y, window.innerHeight - fabSize - margin - bottomNavHeight));
+            const newY = Math.max(margin, Math.min(currentPos.y, window.innerHeight - fabSize - margin - totalNavHeight));
 
             return { x: newX, y: newY };
         });
     };
     window.addEventListener('resize', handleResize);
+    handleResize();
     return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  }, [safeAreaBottomPx]);
 
   useEffect(() => {
     if (theme === Theme.DARK) {
@@ -1527,7 +1548,7 @@ const App: React.FC = () => {
         onTouchMove={!isAnyModalOpen && activeProfileId ? handleTouchMove : undefined}
         onTouchEnd={!isAnyModalOpen && activeProfileId ? handleTouchEnd : undefined}
     >
-        <main className="container mx-auto px-4 pt-12 pb-24 max-w-3xl flex-grow">
+        <main className="container mx-auto px-4 pt-12 pb-[calc(6rem+var(--sab))] max-w-3xl flex-grow">
             { (currentPage === 'inicio' || currentPage === 'resumen') && <Resumen 
                 profile={activeProfile}
                 balance={balance}
@@ -1797,6 +1818,7 @@ const App: React.FC = () => {
                 ringColorClass="focus:ring-amber-300"
                 position={fabPosition}
                 onPositionChange={setFabPosition}
+                safeAreaBottomPx={safeAreaBottomPx}
             />
         )}
     </div>
