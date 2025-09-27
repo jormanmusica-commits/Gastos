@@ -64,7 +64,6 @@ const defaultBankAccounts: BankAccount[] = [
 const createDefaultProfileData = (): ProfileData => ({
     transactions: [],
     bankAccounts: defaultBankAccounts,
-    categories: defaultCategories,
     fixedExpenses: [],
     quickExpenses: [],
     assets: [],
@@ -242,44 +241,71 @@ const App: React.FC = () => {
     return (savedTheme as Theme) || Theme.DARK;
   });
 
-  const [profiles, setProfiles] = useState<Profile[]>(() => {
-    const savedProfiles = localStorage.getItem('profiles');
-    if (savedProfiles) {
-        const parsedProfiles: Profile[] = JSON.parse(savedProfiles);
-        // Add originalAmount to liabilities and loans if it's missing for backwards compatibility
-        const migratedProfiles = parsedProfiles.map((p: Profile) => ({
-            ...p,
-            data: {
-                ...p.data,
-                quickExpenses: p.data.quickExpenses || [],
-                liabilities: (p.data.liabilities || []).map((l: Liability) => ({
-                    ...l,
-                    originalAmount: (l as any).originalAmount || l.amount,
-                    details: l.details || '',
-                    initialAdditions: (l.initialAdditions || []).map((add: any) => ({
-                        ...add,
-                        id: add.id || crypto.randomUUID(),
-                    })),
-                })),
-                loans: (p.data.loans || []).map((l: Loan) => ({
-                    ...l,
-                    originalAmount: (l as any).originalAmount || l.amount,
-                    details: l.details || '',
-                    initialAdditions: (l.initialAdditions || []).map((add: any) => ({
-                      ...add,
-                      id: add.id || crypto.randomUUID(), // Add id if missing
-                    })),
-                })),
-            }
-        }));
-        return migratedProfiles;
+  const [profiles, setProfiles] = useState<Profile[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+
+  useEffect(() => {
+    const savedGlobalCategoriesJSON = localStorage.getItem('globalCategories');
+    const savedProfilesJSON = localStorage.getItem('profiles');
+    
+    let finalCategories: Category[] = defaultCategories;
+    let finalProfiles: Profile[] = [];
+
+    if (savedGlobalCategoriesJSON) {
+        finalCategories = JSON.parse(savedGlobalCategoriesJSON);
     }
 
-    const legacyTransactions = localStorage.getItem('transactions');
-    if (legacyTransactions) { // Migration logic for existing users
-        const transactions = JSON.parse(legacyTransactions);
+    if (savedProfilesJSON) {
+        let parsedProfiles: Profile[] = JSON.parse(savedProfilesJSON);
+        const allCategories = new Map<string, Category>();
+        let needsMigration = false;
+        
+        finalCategories.forEach(cat => allCategories.set(cat.name.toLowerCase(), cat));
+
+        const migratedProfiles = parsedProfiles.map(p => {
+            const pData = p.data as any;
+            if (pData.categories && Array.isArray(pData.categories)) {
+                needsMigration = true;
+                pData.categories.forEach((cat: Category) => {
+                    allCategories.set(cat.name.toLowerCase(), cat);
+                });
+                delete pData.categories;
+            }
+            return {
+                ...p,
+                data: {
+                    ...p.data,
+                    quickExpenses: p.data.quickExpenses || [],
+                    liabilities: (p.data.liabilities || []).map((l: Liability) => ({
+                        ...l,
+                        originalAmount: (l as any).originalAmount || l.amount,
+                        details: l.details || '',
+                        initialAdditions: (l.initialAdditions || []).map((add: any) => ({
+                            ...add,
+                            id: add.id || crypto.randomUUID(),
+                        })),
+                    })),
+                    loans: (p.data.loans || []).map((l: Loan) => ({
+                        ...l,
+                        originalAmount: (l as any).originalAmount || l.amount,
+                        details: l.details || '',
+                        initialAdditions: (l.initialAdditions || []).map((add: any) => ({
+                          ...add,
+                          id: add.id || crypto.randomUUID(),
+                        })),
+                    })),
+                }
+            };
+        });
+        finalProfiles = migratedProfiles;
+        if (needsMigration) {
+            finalCategories = Array.from(allCategories.values());
+        }
+
+    } else if (localStorage.getItem('transactions')) { // Legacy user migration
+        const transactions = JSON.parse(localStorage.getItem('transactions')!);
         const bankAccounts = JSON.parse(localStorage.getItem('bankAccounts') || 'null') || defaultBankAccounts;
-        const categories = JSON.parse(localStorage.getItem('categories') || 'null') || defaultCategories;
+        const legacyCategories = JSON.parse(localStorage.getItem('categories') || 'null') || defaultCategories;
         const fixedExpenses = JSON.parse(localStorage.getItem('fixedExpenses') || 'null') || [];
         
         const migratedProfile: Profile = {
@@ -288,30 +314,34 @@ const App: React.FC = () => {
             countryCode: 'ES',
             currency: 'EUR',
             data: { 
-                transactions, bankAccounts, categories, fixedExpenses, 
+                transactions, bankAccounts, fixedExpenses, 
                 assets: [], liabilities: [], loans: [], quickExpenses: []
             }
         };
-        return [migratedProfile];
+        finalProfiles = [migratedProfile];
+        finalCategories = legacyCategories;
+    } else { // New user
+        const defaultProfileSpain: Profile = {
+            id: crypto.randomUUID(),
+            name: 'España',
+            countryCode: 'ES',
+            currency: 'EUR',
+            data: createDefaultProfileData()
+        };
+        const defaultProfileColombia: Profile = {
+            id: crypto.randomUUID(),
+            name: 'Colombia',
+            countryCode: 'CO',
+            currency: 'COP',
+            data: createDefaultProfileData()
+        };
+        finalProfiles = [defaultProfileSpain, defaultProfileColombia];
+        finalCategories = defaultCategories;
     }
 
-    // New user
-    const defaultProfileSpain: Profile = {
-        id: crypto.randomUUID(),
-        name: 'España',
-        countryCode: 'ES',
-        currency: 'EUR',
-        data: createDefaultProfileData()
-    };
-    const defaultProfileColombia: Profile = {
-        id: crypto.randomUUID(),
-        name: 'Colombia',
-        countryCode: 'CO',
-        currency: 'COP',
-        data: createDefaultProfileData()
-    };
-    return [defaultProfileSpain, defaultProfileColombia];
-  });
+    setCategories(finalCategories);
+    setProfiles(finalProfiles);
+}, []);
   
   const [activeProfileId, setActiveProfileId] = useState<string | null>(null);
   
@@ -388,7 +418,9 @@ const App: React.FC = () => {
   }, [theme]);
   
   useEffect(() => {
-    localStorage.setItem('profiles', JSON.stringify(profiles));
+    if (profiles.length > 0) {
+      localStorage.setItem('profiles', JSON.stringify(profiles));
+    }
     // After first save of profiles, if we migrated, clean up old keys
     if (localStorage.getItem('transactions')) {
         localStorage.removeItem('transactions');
@@ -397,6 +429,12 @@ const App: React.FC = () => {
         localStorage.removeItem('fixedExpenses');
     }
   }, [profiles]);
+
+  useEffect(() => {
+    if (categories.length > 0) {
+        localStorage.setItem('globalCategories', JSON.stringify(categories));
+    }
+  }, [categories]);
   
     // =======================================================
     // START: Gesture and Navigation History Logic
@@ -473,7 +511,7 @@ const App: React.FC = () => {
 
     let finalCategoryId = categoryId;
     if (type === 'expense' && !categoryId) {
-        const generalCategory = activeProfile.data.categories.find(c => c.name.toLowerCase() === 'general');
+        const generalCategory = categories.find(c => c.name.toLowerCase() === 'general');
         if (generalCategory) {
             finalCategoryId = generalCategory.id;
         }
@@ -509,7 +547,7 @@ const App: React.FC = () => {
     }
     
     updateActiveProfileData(data => ({ ...data, transactions: updatedTransactions }));
-  }, [activeProfile, updateActiveProfileData]);
+  }, [activeProfile, updateActiveProfileData, categories]);
   
   const handleAddTransfer = useCallback((fromMethodId: string, toMethodId: string, amount: number, date: string): string | void => {
     if (!activeProfile) return "No active profile found.";
@@ -616,22 +654,34 @@ const App: React.FC = () => {
   }, [activeProfile, updateActiveProfileData]);
 
   const handleAddCategory = useCallback((name: string, icon: string) => {
-    const newCategory: Category = { id: crypto.randomUUID(), name, icon };
-    updateActiveProfileData(data => ({ ...data, categories: [...data.categories, newCategory] }));
-  }, [updateActiveProfileData]);
+    if (categories.some(c => c.name.trim().toLowerCase() === name.trim().toLowerCase())) {
+        alert('Ya existe una categoría con este nombre.');
+        return;
+    }
+    const newCategory: Category = { id: crypto.randomUUID(), name: name.trim(), icon };
+    setCategories(prev => [...prev, newCategory]);
+  }, [categories]);
 
   const handleUpdateCategory = useCallback((id: string, name: string, icon: string) => {
-    updateActiveProfileData(data => ({ ...data, categories: data.categories.map(cat => cat.id === id ? { ...cat, name, icon } : cat) }));
-  }, [updateActiveProfileData]);
+    if (categories.some(c => c.id !== id && c.name.trim().toLowerCase() === name.trim().toLowerCase())) {
+        alert('Ya existe otra categoría con este nombre.');
+        return;
+    }
+    setCategories(prev => prev.map(cat => cat.id === id ? { ...cat, name: name.trim(), icon } : cat));
+  }, [categories]);
 
   const handleDeleteCategory = useCallback((id: string) => {
-    if (!activeProfile) return;
-    if (activeProfile.data.transactions.some(t => t.categoryId === id)) {
-      alert("No puedes eliminar una categoría que está siendo utilizada por algún gasto registrado.");
+    const isCategoryUsed = profiles.some(profile => 
+        profile.data.transactions.some(t => t.categoryId === id) ||
+        (profile.data.fixedExpenses || []).some(fe => fe.categoryId === id) ||
+        (profile.data.quickExpenses || []).some(qe => qe.categoryId === id)
+    );
+    if (isCategoryUsed) {
+      alert("No puedes eliminar una categoría que está siendo utilizada por alguna transacción, gasto fijo o gasto rápido en cualquier perfil.");
       return;
     }
-    updateActiveProfileData(data => ({ ...data, categories: data.categories.filter(cat => cat.id !== id) }));
-  }, [activeProfile, updateActiveProfileData]);
+    setCategories(prev => prev.filter(cat => cat.id !== id));
+  }, [profiles, categories]);
 
   const handleAddBankAccount = useCallback((name: string, color: string) => {
     const newBankAccount: BankAccount = { id: crypto.randomUUID(), name, color };
@@ -741,7 +791,7 @@ const App: React.FC = () => {
     }
 
     const newAsset: Asset = { id: crypto.randomUUID(), name: 'Ahorro', value, date, sourceMethodId };
-    const ahorroCategory = activeProfile.data.categories.find(c => c.name.toLowerCase() === 'ahorro');
+    const ahorroCategory = categories.find(c => c.name.toLowerCase() === 'ahorro');
     const newTransaction: Transaction = {
         id: crypto.randomUUID(),
         description: `Movimiento a Ahorros`,
@@ -769,7 +819,7 @@ const App: React.FC = () => {
     }));
 
     setIsAssetLiabilityModalOpen(false);
-  }, [activeProfile, balancesByMethod, updateActiveProfileData]);
+  }, [activeProfile, balancesByMethod, updateActiveProfileData, categories]);
 
   const handleSpendFromSavings = useCallback((amountToSpend: number, description: string, date: string, categoryId: string | undefined, sourceMethodId: string) => {
     if (!activeProfile) return;
@@ -816,7 +866,7 @@ const App: React.FC = () => {
 
     let finalCategoryId = categoryId;
     if (!finalCategoryId) {
-        const generalCategory = activeProfile.data.categories.find(c => c.name.toLowerCase() === 'general');
+        const generalCategory = categories.find(c => c.name.toLowerCase() === 'general');
         if (generalCategory) {
             finalCategoryId = generalCategory.id;
         }
@@ -847,7 +897,7 @@ const App: React.FC = () => {
     }));
 
     setIsSpendSavingsModalOpen(false);
-  }, [activeProfile, updateActiveProfileData]);
+  }, [activeProfile, updateActiveProfileData, categories]);
 
   const handleSaveLiability = useCallback((name: string, details: string, amount: number, destinationMethodId: string, date: string, isInitial: boolean) => {
     if (!activeProfile) return;
@@ -1016,7 +1066,7 @@ const App: React.FC = () => {
   }, [activeProfile, balance, balancesByMethod]);
 
   const handleExportAllDataToJson = useCallback(async () => {
-    const dataToExport = { profiles, theme, fabPosition };
+    const dataToExport = { profiles, categories, theme, fabPosition };
     const jsonString = JSON.stringify(dataToExport, null, 2);
     const blob = new Blob([jsonString], { type: 'application/json' });
     
@@ -1055,7 +1105,7 @@ const App: React.FC = () => {
       document.body.removeChild(link);
       URL.revokeObjectURL(url); // Clean up the object URL
     }
-  }, [profiles, theme, fabPosition]);
+  }, [profiles, categories, theme, fabPosition]);
 
   const handleImportDataFromJson = useCallback((file: File) => {
     if (!window.confirm('¿Estás seguro de que quieres importar estos datos? Esto sobreescribirá todos los datos actuales.')) {
@@ -1069,6 +1119,7 @@ const App: React.FC = () => {
                 const data = JSON.parse(result);
                 if (data.profiles && Array.isArray(data.profiles)) {
                     setProfiles(data.profiles);
+                    setCategories(data.categories || defaultCategories);
                     setActiveProfileId(null);
                     setTheme(data.theme || Theme.DARK);
                     setFabPosition(data.fabPosition || getDefaultFabPosition());
@@ -1098,7 +1149,7 @@ const App: React.FC = () => {
 
     let mi = 0, me = 0, mib = 0, mic = 0, meb = 0, mec = 0, ti = 0, te = 0;
     
-    const ahorroCategoryId = activeProfile.data.categories.find(c => c.name.toLowerCase() === 'ahorro')?.id;
+    const ahorroCategoryId = categories.find(c => c.name.toLowerCase() === 'ahorro')?.id;
 
     for (const t of activeProfile.data.transactions) {
         if (t.isGift) continue;
@@ -1146,7 +1197,7 @@ const App: React.FC = () => {
     });
 
     return { monthlyIncome: mi, monthlyExpenses: me, monthlyIncomeByBank: mib, monthlyIncomeByCash: mic, monthlyExpensesByBank: meb, monthlyExpensesByCash: mec, totalIncome: ti, totalExpenses: te, manualAssetsValue: mav, totalLiabilitiesValue: tlv, totalLoansValue: tlov, savingsBySource: sbs };
-  }, [activeProfile]);
+  }, [activeProfile, categories]);
 
   const minDateForExpenses = useMemo(() => {
     if (!activeProfile) return undefined;
@@ -1439,6 +1490,10 @@ const App: React.FC = () => {
         setNavigationHistory([]);
     }, []);
 
+    if (profiles.length === 0) {
+      return null; // Render nothing while data is loading
+    }
+    
     if (!activeProfileId || !activeProfile) {
         return (
           <div className={`app-container ${theme}`}>
@@ -1487,11 +1542,12 @@ const App: React.FC = () => {
                 monthlyExpensesByCash={monthlyExpensesByCash}
                 totalIncome={totalIncome}
                 totalExpenses={totalExpenses}
+                categories={categories}
             /> }
             { currentPage === 'ajustes' && <Ajustes 
                 theme={theme}
                 onToggleTheme={handleToggleTheme}
-                categories={activeProfile.data.categories}
+                categories={categories}
                 onAddCategory={handleAddCategory}
                 onUpdateCategory={handleUpdateCategory}
                 onDeleteCategory={handleDeleteCategory}
@@ -1534,6 +1590,7 @@ const App: React.FC = () => {
                 minDateForExpenses={minDateForExpenses}
                 onInitiateTransfer={handleInitiateTransfer}
                 onOpenGiftModal={setGiftingFixedExpense}
+                categories={categories}
             /> }
             { currentPage === 'patrimonio' && <Patrimonio
                     profile={activeProfile}
@@ -1599,7 +1656,7 @@ const App: React.FC = () => {
             onClose={() => setIsFixedExpenseModalOpen(false)}
             fixedExpenses={activeProfile.data.fixedExpenses}
             transactions={activeProfile.data.transactions}
-            categories={activeProfile.data.categories}
+            categories={categories}
             onAddFixedExpense={handleAddFixedExpense}
             onDeleteFixedExpense={handleDeleteFixedExpense}
             currency={activeProfile.currency}
@@ -1611,7 +1668,7 @@ const App: React.FC = () => {
             isOpen={isQuickExpenseModalOpen}
             onClose={() => setIsQuickExpenseModalOpen(false)}
             quickExpenses={activeProfile.data.quickExpenses}
-            categories={activeProfile.data.categories}
+            categories={categories}
             onAddQuickExpense={handleAddQuickExpense}
             onUpdateQuickExpense={handleUpdateQuickExpense}
             onDeleteQuickExpense={handleDeleteQuickExpense}
@@ -1638,7 +1695,7 @@ const App: React.FC = () => {
             onSpend={handleSpendFromSavings}
             savingsBySource={savingsBySource}
             currency={activeProfile.currency}
-            categories={activeProfile.data.categories}
+            categories={categories}
             onAddCategory={handleAddCategory}
             onUpdateCategory={handleUpdateCategory}
             onDeleteCategory={handleDeleteCategory}

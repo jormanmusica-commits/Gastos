@@ -76,7 +76,6 @@ export interface Loan {
 export interface ProfileData {
   transactions: Transaction[];
   bankAccounts: BankAccount[];
-  categories: Category[];
   fixedExpenses: FixedExpense[];
   quickExpenses: QuickExpense[];
   assets: Asset[];

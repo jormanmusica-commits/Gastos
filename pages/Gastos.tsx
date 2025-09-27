@@ -33,6 +33,7 @@ interface GastosProps {
   minDateForExpenses?: string;
   onInitiateTransfer: (fromAccountId: string) => void;
   onOpenGiftModal: (expense: FixedExpense) => void;
+  categories: Category[];
 }
 
 const Gastos: React.FC<GastosProps> = ({ 
@@ -43,9 +44,10 @@ const Gastos: React.FC<GastosProps> = ({
     onAddQuickExpense,
     minDateForExpenses,
     onInitiateTransfer,
-    onOpenGiftModal
+    onOpenGiftModal,
+    categories
 }) => {
-    const { data: { categories, bankAccounts, fixedExpenses, quickExpenses, transactions }, currency } = profile;
+    const { data: { bankAccounts, fixedExpenses, quickExpenses, transactions }, currency } = profile;
     const [activeMethodId, setActiveMethodId] = useState<string | null>(null);
     const [isFormVisible, setIsFormVisible] = useState(false);
     const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);

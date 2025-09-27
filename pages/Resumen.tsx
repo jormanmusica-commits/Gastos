@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useCallback } from 'react';
-import { Profile, Filters, TransactionTypeFilter, Transaction } from '../types';
+import { Profile, Filters, TransactionTypeFilter, Transaction, Category } from '../types';
 import Summary from '../components/Summary';
 import TransactionList from '../components/IncomeList';
 import MonthlySummary from '../components/MonthlySummary';
@@ -24,6 +24,7 @@ interface ResumenProps {
   monthlyExpensesByCash: number;
   totalIncome: number;
   totalExpenses: number;
+  categories: Category[];
 }
 
 const CASH_METHOD_ID = 'efectivo';
@@ -34,9 +35,10 @@ const Resumen: React.FC<ResumenProps> = ({
   monthlyIncome, monthlyExpenses,
   monthlyIncomeByBank, monthlyIncomeByCash,
   monthlyExpensesByBank, monthlyExpensesByCash,
-  totalIncome, totalExpenses
+  totalIncome, totalExpenses,
+  categories
 }) => {
-  const { data: { transactions, categories, bankAccounts, liabilities = [], loans = [] }, currency } = profile;
+  const { data: { transactions, bankAccounts, liabilities = [], loans = [] }, currency } = profile;
   const [modalType, setModalType] = useState<'income' | 'expense' | null>(null);
   const [detailTransaction, setDetailTransaction] = useState<Transaction | null>(null);
 
