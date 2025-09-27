@@ -7,7 +7,7 @@ interface BankSelectionModalProps {
   onClose: () => void;
   bankAccounts: BankAccount[];
   balancesByMethod: Record<string, number>;
-  onSelect: (bankId: string, event: React.MouseEvent<HTMLButtonElement>) => void;
+  onSelect: (bankId: string) => void;
   onManageBanks: () => void;
   mode: 'income' | 'expense';
   currency: string;
@@ -28,8 +28,8 @@ const BankSelectionModal: React.FC<BankSelectionModalProps> = ({
     }).format(amount);
   };
 
-  const handleSelect = (bankId: string, event: React.MouseEvent<HTMLButtonElement>) => {
-    onSelect(bankId, event);
+  const handleSelect = (bankId: string) => {
+    onSelect(bankId);
     onClose();
   };
 
@@ -59,7 +59,7 @@ const BankSelectionModal: React.FC<BankSelectionModalProps> = ({
             return (
               <button 
                 key={acc.id}
-                onClick={(e) => handleSelect(acc.id, e)}
+                onClick={() => handleSelect(acc.id)}
                 className={`w-full group flex items-center justify-between p-4 rounded-lg text-left transition-colors duration-200 ${
                   isDisabled 
                     ? 'cursor-not-allowed opacity-60' 

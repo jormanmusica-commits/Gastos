@@ -55,6 +55,7 @@ const Gastos: React.FC<GastosProps> = ({
 }) => {
     const { data: { bankAccounts, fixedExpenses, quickExpenses, transactions }, currency } = profile;
     const [activeMethodId, setActiveMethodId] = useState<string | null>(null);
+    const [isFormVisible, setIsFormVisible] = useState(false);
     const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
     const [isBankModalOpen, setIsBankModalOpen] = useState(false);
     const [isBankSelectionModalOpen, setIsBankSelectionModalOpen] = useState(false);
@@ -62,7 +63,7 @@ const Gastos: React.FC<GastosProps> = ({
     const [isFixedExpenseModalOpen, setIsFixedExpenseModalOpen] = useState(false);
     const [fixedExpenseToPay, setFixedExpenseToPay] = useState<FixedExpense | null>(null);
     const [quickExpenseToPay, setQuickExpenseToPay] = useState<QuickExpense | null>(null);
-    const [formAnchorEl, setFormAnchorEl] = useState<HTMLElement | null>(null);
+    const formContainerRef = useRef<HTMLDivElement>(null);
 
     const bankBalance = Object.entries(balancesByMethod)
       .filter(([id]) => id !== CASH_METHOD_ID)
@@ -73,9 +74,9 @@ const Gastos: React.FC<GastosProps> = ({
     const isBankDisabled = bankBalance <= 0;
     const isCashDisabled = cashBalance <= 0;
 
-    const handleSelectMethod = (id: string, event: React.MouseEvent<HTMLButtonElement>) => {
+    const handleSelectMethod = (id: string) => {
         setActiveMethodId(id);
-        setFormAnchorEl(event.currentTarget);
+        setIsFormVisible(true);
     };
 
     const getButtonClass = (isActive: boolean, disabled = false) => {
@@ -93,9 +94,9 @@ const Gastos: React.FC<GastosProps> = ({
 
     const selectedBank = bankAccounts.find(b => b.id === activeMethodId);
 
-    const handleBankSelect = (bankId: string, event: React.MouseEvent<HTMLButtonElement>) => {
+    const handleBankSelect = (bankId: string) => {
       setIsBankSelectionModalOpen(false);
-      handleSelectMethod(bankId, event);
+      handleSelectMethod(bankId);
     };
 
     const handleFormSubmit = (description: string, amount: number, date: string, categoryId?: string, options?: { addAsFixed?: boolean; addAsQuick?: boolean; }) => {
@@ -108,8 +109,7 @@ const Gastos: React.FC<GastosProps> = ({
             const category = categories.find(c => c.id === categoryId);
             onAddQuickExpense(description, amount, categoryId, category?.icon || '⚡️');
           }
-          setActiveMethodId(null);
-          setFormAnchorEl(null);
+          setIsFormVisible(false);
           setSelectedCategoryId(undefined);
         }
     };
@@ -170,6 +170,12 @@ const Gastos: React.FC<GastosProps> = ({
       }).format(amount);
     };
 
+    const handleAnimationEnd = () => {
+        if (!isFormVisible) {
+            setActiveMethodId(null);
+        }
+    };
+
     return (
       <>
         <div className="relative animate-fade-in">
@@ -201,7 +207,7 @@ const Gastos: React.FC<GastosProps> = ({
                   </h3>
                   <div className="grid grid-cols-2 gap-4">
                     <button
-                      onClick={(e) => setIsBankSelectionModalOpen(true)}
+                      onClick={() => setIsBankSelectionModalOpen(true)}
                       className={getButtonClass(!!selectedBank, isBankDisabled)}
                       style={selectedBank ? { backgroundColor: selectedBank.color, color: 'white', borderColor: 'transparent', '--tw-ring-color': selectedBank.color } as React.CSSProperties : {}}
                       disabled={isBankDisabled}
@@ -210,13 +216,32 @@ const Gastos: React.FC<GastosProps> = ({
                       Banco / Tarjeta
                     </button>
                     <button
-                      onClick={(e) => handleSelectMethod(CASH_METHOD_ID, e)}
+                      onClick={() => handleSelectMethod(CASH_METHOD_ID)}
                       className={getButtonClass(activeMethodId === CASH_METHOD_ID, isCashDisabled)}
                       style={activeMethodId === CASH_METHOD_ID ? { backgroundColor: '#008f39', '--tw-ring-color': '#008f39' } as React.CSSProperties : {}}
                       disabled={isCashDisabled}
                     >
                       Efectivo
                     </button>
+                  </div>
+                  
+                  <div
+                      className={`transition-all duration-700 ease-in-out overflow-hidden ${isFormVisible ? 'max-h-[1000px] opacity-100' : 'max-h-0 opacity-0'}`}
+                      ref={formContainerRef}
+                      onTransitionEnd={handleAnimationEnd}
+                  >
+                      {activeMethodId && (
+                          <TransactionForm
+                              key={activeMethodId}
+                              transactionType="expense"
+                              onAddTransaction={handleFormSubmit}
+                              categories={categories}
+                              selectedCategoryId={selectedCategoryId}
+                              onCategorySelectClick={() => setIsCategoryModalOpen(true)}
+                              minDate={minDateForExpenses}
+                              currency={currency}
+                          />
+                      )}
                   </div>
                   
                   {totalFixedExpenses > 0 && (
@@ -265,23 +290,6 @@ const Gastos: React.FC<GastosProps> = ({
               </div>
           </div>
         </div>
-        
-        {activeMethodId && formAnchorEl && (
-            <TransactionForm 
-                key={activeMethodId}
-                mode="popover"
-                isOpen={!!activeMethodId}
-                onClose={() => { setActiveMethodId(null); setFormAnchorEl(null); setSelectedCategoryId(undefined); }}
-                anchorEl={formAnchorEl}
-                transactionType="expense" 
-                onAddTransaction={handleFormSubmit}
-                categories={categories}
-                selectedCategoryId={selectedCategoryId}
-                onCategorySelectClick={() => setIsCategoryModalOpen(true)}
-                minDate={minDateForExpenses}
-                currency={currency}
-            />
-        )}
 
         <CategoryModal 
           isOpen={isCategoryModalOpen}
