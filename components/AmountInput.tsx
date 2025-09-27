@@ -24,32 +24,6 @@ const AmountInput: React.FC<AmountInputProps> = ({ value, onChange, onSubmitted,
     }
   }, [autoFocus]);
 
-  useEffect(() => {
-    if (isKeypadOpen && buttonRef.current) {
-      // Delay scrolling to ensure the keypad is animating and layout has settled.
-      const timer = setTimeout(() => {
-        const element = buttonRef.current;
-        if (element) {
-          const elementRect = element.getBoundingClientRect();
-          const viewportHeight = window.innerHeight;
-          
-          // We want to scroll the element to be about 1/3rd from the top of the viewport.
-          // This ensures it's visible above the keypad.
-          const idealPosition = viewportHeight / 3;
-          
-          // Calculate how much we need to scroll.
-          const scrollOffset = elementRect.top - idealPosition;
-
-          window.scrollBy({
-            top: scrollOffset,
-            behavior: 'smooth',
-          });
-        }
-      }, 100); // Wait for keypad animation to start
-      return () => clearTimeout(timer);
-    }
-  }, [isKeypadOpen]);
-
   const handleSubmit = (newValue: string) => {
     // The value from keypad is already sanitized (e.g. '123.45')
     onChange(newValue);
@@ -91,6 +65,7 @@ const AmountInput: React.FC<AmountInputProps> = ({ value, onChange, onSubmitted,
         initialValue={value}
         themeColor={themeColor}
         currencySymbol={currencySymbol}
+        anchorEl={buttonRef.current}
       />
     </>
   );

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import BackspaceIcon from './icons/BackspaceIcon';
 import CheckIcon from './icons/CheckIcon';
 
@@ -9,6 +9,7 @@ interface NumericKeypadProps {
   initialValue?: string;
   themeColor: string;
   currencySymbol: string;
+  anchorEl?: HTMLElement | null;
 }
 
 const KeypadButton: React.FC<{ onClick: () => void; children: React.ReactNode; className?: string; ariaLabel: string }> = ({ onClick, children, className = '', ariaLabel }) => (
@@ -22,8 +23,10 @@ const KeypadButton: React.FC<{ onClick: () => void; children: React.ReactNode; c
   </button>
 );
 
-const NumericKeypad: React.FC<NumericKeypadProps> = ({ isOpen, onClose, onSubmit, initialValue = '', themeColor, currencySymbol }) => {
+const NumericKeypad: React.FC<NumericKeypadProps> = ({ isOpen, onClose, onSubmit, initialValue = '', themeColor, currencySymbol, anchorEl }) => {
   const [displayValue, setDisplayValue] = useState('0');
+  const keypadRef = useRef<HTMLDivElement>(null);
+  const [position, setPosition] = useState<{ top: number; left: number } | null>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -31,6 +34,39 @@ const NumericKeypad: React.FC<NumericKeypadProps> = ({ isOpen, onClose, onSubmit
     }
   }, [isOpen, initialValue]);
   
+  // Calculate position when opening
+  useEffect(() => {
+    if (isOpen && anchorEl && keypadRef.current) {
+      const anchorRect = anchorEl.getBoundingClientRect();
+      const keypadRect = keypadRef.current.getBoundingClientRect();
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+      const margin = 8;
+
+      let top = anchorRect.bottom + margin;
+      let left = anchorRect.left;
+
+      // Adjust if keypad goes off-screen vertically. Prefer below.
+      if (top + keypadRect.height > viewportHeight - margin) {
+        top = anchorRect.top - keypadRect.height - margin;
+      }
+      
+      // Adjust if keypad goes off-screen horizontally.
+      if (left + keypadRect.width > viewportWidth - margin) {
+        left = viewportWidth - keypadRect.width - margin;
+      }
+      
+      // Ensure it doesn't go off the left edge.
+      if (left < margin) {
+        left = margin;
+      }
+      
+      setPosition({ top, left });
+    } else if (!isOpen) {
+      setPosition(null); // Reset position on close
+    }
+  }, [isOpen, anchorEl]);
+
   if (!isOpen) return null;
 
   const handleNumberClick = (num: string) => {
@@ -72,12 +108,18 @@ const NumericKeypad: React.FC<NumericKeypadProps> = ({ isOpen, onClose, onSubmit
 
   return (
     <div
-      className="fixed inset-0 z-50 flex flex-col justify-end"
+      className="fixed inset-0 z-50"
       onClick={onClose}
     >
       <div
-        className="bg-gray-100 dark:bg-gray-900 w-full p-4 rounded-t-2xl shadow-2xl animate-slide-up"
+        ref={keypadRef}
+        className="absolute bg-gray-100 dark:bg-gray-900 p-4 rounded-2xl shadow-2xl animate-scale-in-up"
         onClick={(e) => e.stopPropagation()}
+        style={{
+          ...(position || { top: -9999, left: -9999 }), // Position off-screen until calculated
+          visibility: position ? 'visible' : 'hidden',
+          width: '320px',
+        }}
       >
         <div className="w-full text-right bg-white dark:bg-black/20 rounded-lg p-4 mb-4">
             <span className="text-5xl font-light text-gray-800 dark:text-gray-100 break-all">
