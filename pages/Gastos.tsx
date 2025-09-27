@@ -65,6 +65,18 @@ const Gastos: React.FC<GastosProps> = ({
     const [quickExpenseToPay, setQuickExpenseToPay] = useState<QuickExpense | null>(null);
     const formContainerRef = useRef<HTMLDivElement>(null);
 
+    useEffect(() => {
+        if (isFormVisible) {
+            // Use a minimal timeout to ensure the element is rendered and transitioning
+            // before we ask the browser to scroll to it. This makes the scroll and
+            // the form appearance feel like a single, fluid action.
+            const timer = setTimeout(() => {
+                formContainerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+            }, 50);
+            return () => clearTimeout(timer);
+        }
+    }, [isFormVisible]);
+
     const bankBalance = Object.entries(balancesByMethod)
       .filter(([id]) => id !== CASH_METHOD_ID)
       // FIX: Cast amount to number to resolve TypeScript error where it was inferred as unknown.
@@ -173,10 +185,8 @@ const Gastos: React.FC<GastosProps> = ({
     const handleAnimationEnd = () => {
         if (!isFormVisible) {
             setActiveMethodId(null);
-        } else {
-            // When the form becomes visible, scroll it into view so the keypad is visible.
-            formContainerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
         }
+        // The scroll is now handled by the useEffect hook
     };
 
     return (
@@ -229,7 +239,7 @@ const Gastos: React.FC<GastosProps> = ({
                   </div>
                   
                   <div
-                      className={`transition-all duration-300 ease-in-out overflow-hidden ${isFormVisible ? 'max-h-[1000px] opacity-100' : 'max-h-0 opacity-0'}`}
+                      className={`transition-all duration-200 ease-out overflow-hidden ${isFormVisible ? 'max-h-[1000px] opacity-100' : 'max-h-0 opacity-0'}`}
                       ref={formContainerRef}
                       onTransitionEnd={handleAnimationEnd}
                   >
