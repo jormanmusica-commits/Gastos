@@ -70,9 +70,9 @@ const PayQuickExpenseModal: React.FC<PayQuickExpenseModalProps> = ({
                   >
                     <div className="flex items-center gap-3">
                       <span className="w-4 h-4 rounded-full" style={{ backgroundColor: source.color }}></span>
-                      <span className="font-semibold">{source.name}</span>
+                      <span className="font-semibold text-gray-800 dark:text-gray-200">{source.name}</span>
                     </div>
-                    <span className="font-mono text-sm">{formatCurrency(source.balance)}</span>
+                    <span className="font-mono text-sm text-gray-600 dark:text-gray-400">{formatCurrency(source.balance)}</span>
                   </button>
                 )
               })}

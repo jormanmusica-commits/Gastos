@@ -113,9 +113,9 @@ const CustomDatePicker: React.FC<{
   const calendarContent = (
     <>
       <div className="flex justify-between items-center mb-4">
-        <button type="button" onClick={() => changeMonth(-1)} className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"><PrevMonthIcon /></button>
+        <button type="button" onClick={() => changeMonth(-1)} className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400"><PrevMonthIcon /></button>
         <span className="font-semibold text-gray-800 dark:text-gray-200 capitalize">{viewDate.toLocaleString('es-ES', { month: 'long', year: 'numeric', timeZone: 'UTC' })}</span>
-        <button type="button" onClick={() => changeMonth(1)} className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"><NextMonthIcon /></button>
+        <button type="button" onClick={() => changeMonth(1)} className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400"><NextMonthIcon /></button>
       </div>
       <div className="grid grid-cols-7 gap-1 text-center text-xs text-gray-500 dark:text-gray-400 font-medium mb-2">
         <div>L</div><div>M</div><div>X</div><div>J</div><div>V</div><div>S</div><div>D</div>
