@@ -75,9 +75,9 @@ const CategoryModal: React.FC<CategoryModalProps> = ({
                       value={editingCategory.icon}
                       placeholder="😀"
                       onChange={(e) => {
-                          const lastChar = [...e.target.value].pop() || '🏷️';
-                          setEditingCategory({ ...editingCategory, icon: lastChar });
+                          setEditingCategory({ ...editingCategory, icon: e.target.value });
                       }}
+                      onFocus={(e) => e.target.select()}
                       className="w-20 text-4xl p-2 text-center border border-gray-300 dark:border-gray-600 rounded-md bg-transparent text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500"
                     />
                     <input
@@ -127,9 +127,9 @@ const CategoryModal: React.FC<CategoryModalProps> = ({
                     value={newCategory.icon}
                     placeholder="😀"
                     onChange={(e) => {
-                        const lastChar = [...e.target.value].pop() || '🏷️';
-                        setNewCategory({ ...newCategory, icon: lastChar });
+                        setNewCategory({ ...newCategory, icon: e.target.value });
                     }}
+                    onFocus={(e) => e.target.select()}
                     className="w-20 text-4xl p-2 text-center border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500"
                 />
                 <input
