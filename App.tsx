@@ -1596,6 +1596,114 @@ const App: React.FC = () => {
         setNavigationHistory([]);
     }, []);
 
+    const handleDeleteLiability = useCallback((id: string) => {
+        if (!activeProfile) return;
+
+        const liabilityToDelete = activeProfile.data.liabilities.find(l => l.id === id);
+        if (!liabilityToDelete) return;
+
+        if (!window.confirm(`¿Estás seguro de que quieres eliminar la deuda "${liabilityToDelete.name}"? Se eliminarán también todas las transacciones asociadas (pagos, ampliaciones, y la transacción de origen si existe). Esta acción es irreversible.`)) {
+            return;
+        }
+
+        let updatedTransactions = [...activeProfile.data.transactions];
+
+        const transactionsToRemove = updatedTransactions.filter(t =>
+            (t.patrimonioType === 'liability' && t.patrimonioId === id) ||
+            (t.patrimonioType === 'debt-addition' && t.patrimonioId === id) ||
+            t.liabilityId === id
+        );
+        const transactionIdsToRemove = transactionsToRemove.map(t => t.id);
+
+        updatedTransactions = updatedTransactions.filter(t => !transactionIdsToRemove.includes(t.id));
+
+        const validationError = validateTransactionChange(updatedTransactions, activeProfile.data.bankAccounts);
+        if (validationError) {
+            alert(validationError + "\nNo se puede eliminar esta deuda.");
+            return;
+        }
+
+        const updatedLiabilities = activeProfile.data.liabilities.filter(l => l.id !== id);
+
+        updateActiveProfileData(data => ({
+            ...data,
+            transactions: updatedTransactions,
+            liabilities: updatedLiabilities,
+        }));
+      }, [activeProfile, updateActiveProfileData]);
+
+      const handleDeleteLoan = useCallback((id: string) => {
+        if (!activeProfile) return;
+
+        const loanToDelete = activeProfile.data.loans.find(l => l.id === id);
+        if (!loanToDelete) return;
+
+        if (!window.confirm(`¿Estás seguro de que quieres eliminar el préstamo "${loanToDelete.name}"? Se eliminarán también todas las transacciones asociadas (reembolsos, ampliaciones, y la transacción de origen si existe). Esta acción es irreversible.`)) {
+            return;
+        }
+
+        let updatedTransactions = [...activeProfile.data.transactions];
+
+        const transactionsToRemove = updatedTransactions.filter(t =>
+            (t.patrimonioType === 'loan' && t.patrimonioId === id) ||
+            (t.patrimonioType === 'loan-addition' && t.patrimonioId === id) ||
+            t.loanId === id
+        );
+        const transactionIdsToRemove = transactionsToRemove.map(t => t.id);
+
+        updatedTransactions = updatedTransactions.filter(t => !transactionIdsToRemove.includes(t.id));
+
+        const validationError = validateTransactionChange(updatedTransactions, activeProfile.data.bankAccounts);
+        if (validationError) {
+            alert(validationError + "\nNo se puede eliminar este préstamo.");
+            return;
+        }
+
+        const updatedLoans = activeProfile.data.loans.filter(l => l.id !== id);
+
+        updateActiveProfileData(data => ({
+            ...data,
+            transactions: updatedTransactions,
+            loans: updatedLoans,
+        }));
+      }, [activeProfile, updateActiveProfileData]);
+
+      const handleDeleteAsset = useCallback((id: string) => {
+        if (!activeProfile) return;
+
+        const assetToDelete = activeProfile.data.assets.find(a => a.id === id);
+        if (!assetToDelete) return;
+
+        if (!window.confirm(`¿Estás seguro de que quieres eliminar este ahorro? Se eliminará también la transacción de origen. Esta acción es irreversible.`)) {
+            return;
+        }
+
+        let updatedTransactions = [...activeProfile.data.transactions];
+
+        const transactionsToRemove = updatedTransactions.filter(t =>
+            t.patrimonioType === 'asset' && t.patrimonioId === id
+        );
+        const transactionIdsToRemove = transactionsToRemove.map(t => t.id);
+
+        updatedTransactions = updatedTransactions.filter(t => !transactionIdsToRemove.includes(t.id));
+
+        const validationError = validateTransactionChange(updatedTransactions, activeProfile.data.bankAccounts);
+        if (validationError) {
+            alert(validationError + "\nNo se puede eliminar este ahorro.");
+            return;
+        }
+
+        const updatedAssets = activeProfile.data.assets.filter(a => a.id !== id);
+
+        updateActiveProfileData(data => ({
+            ...data,
+            transactions: updatedTransactions,
+            assets: updatedAssets,
+        }));
+
+      }, [activeProfile, updateActiveProfileData]);
+
+
     if (profiles.length === 0) {
       return null; // Render nothing while data is loading
     }
@@ -1709,9 +1817,9 @@ const App: React.FC = () => {
                     liabilities={activeProfile.data.liabilities || []}
                     loans={activeProfile.data.loans || []}
                     bankAccounts={activeProfile.data.bankAccounts}
-                    onDeleteAsset={() => {}}
-                    onDeleteLiability={() => {}}
-                    onDeleteLoan={() => {}}
+                    onDeleteAsset={handleDeleteAsset}
+                    onDeleteLiability={handleDeleteLiability}
+                    onDeleteLoan={handleDeleteLoan}
                     onNavigate={handleNavigate}
                     onOpenSpendSavingsModal={() => setIsSpendSavingsModalOpen(true)}
             /> }
@@ -1725,6 +1833,7 @@ const App: React.FC = () => {
                     onOpenLoanDetailModal={setViewingLoan}
                     onNavigate={handleNavigate}
                     currency={activeProfile.currency}
+                    onDeleteLoan={handleDeleteLoan}
                 /> }
                 { currentPage === 'deudas' && <Deudas
                     profile={activeProfile}
@@ -1735,6 +1844,7 @@ const App: React.FC = () => {
                     onOpenDebtDetailModal={setViewingDebt}
                     onNavigate={handleNavigate}
                     currency={activeProfile.currency}
+                    onDeleteDebt={handleDeleteLiability}
                 /> }
                 { currentPage === 'ahorros' && <Ahorros
                     profile={activeProfile}

@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { Page, Loan, Profile, Transaction, BankAccount } from '../types';
 import ArrowLeftIcon from '../components/icons/ArrowLeftIcon';
+import TrashIcon from '../components/icons/TrashIcon';
 
 const CASH_METHOD_ID = 'efectivo';
 
@@ -14,9 +15,10 @@ interface LoansProps {
   onOpenLoanDetailModal: (loan: Loan) => void;
   onNavigate: (page: Page) => void;
   currency: string;
+  onDeleteLoan: (loanId: string) => void;
 }
 
-const Loans: React.FC<LoansProps> = ({ profile, loans, transactions, onOpenLoanRepaymentModal, onOpenAddValueToLoanModal, onOpenEditLoanModal, onOpenLoanDetailModal, onNavigate, currency }) => {
+const Loans: React.FC<LoansProps> = ({ profile, loans, transactions, onOpenLoanRepaymentModal, onOpenAddValueToLoanModal, onOpenEditLoanModal, onOpenLoanDetailModal, onNavigate, currency, onDeleteLoan }) => {
     const { data: { bankAccounts } } = profile;
     const formatCurrency = (amount: number) => {
         const locale = currency === 'COP' ? 'es-CO' : (currency === 'CLP' ? 'es-CL' : 'es-ES');
@@ -28,7 +30,7 @@ const Loans: React.FC<LoansProps> = ({ profile, loans, transactions, onOpenLoanR
         }).format(amount);
     };
 
-    const LoanCard: React.FC<{ loan: Loan, onRegisterPayment: () => void, onAddValue: () => void, onEdit: () => void, onOpenDetails: () => void }> = ({ loan, onRegisterPayment, onAddValue, onEdit, onOpenDetails }) => {
+    const LoanCard: React.FC<{ loan: Loan, onRegisterPayment: () => void, onAddValue: () => void, onEdit: () => void, onOpenDetails: () => void, onDelete: () => void }> = ({ loan, onRegisterPayment, onAddValue, onEdit, onOpenDetails, onDelete }) => {
         const paidAmount = loan.originalAmount - loan.amount;
         const progress = loan.originalAmount > 0 ? (paidAmount / loan.originalAmount) * 100 : 0;
         
@@ -71,6 +73,13 @@ const Loans: React.FC<LoansProps> = ({ profile, loans, transactions, onOpenLoanR
                         <h3 className="font-bold text-lg text-gray-800 dark:text-gray-100 truncate">{loan.name}</h3>
                         <span className="text-xs text-gray-400 dark:text-gray-500 flex-shrink-0">{formattedDate}</span>
                     </div>
+                    <button
+                        onClick={(e) => { e.stopPropagation(); onDelete(); }}
+                        className="p-2 -mt-2 -mr-2 rounded-full text-gray-400 hover:text-red-500 hover:bg-red-500/10 transition-colors"
+                        aria-label={`Eliminar préstamo ${loan.name}`}
+                    >
+                        <TrashIcon className="w-5 h-5" />
+                    </button>
                 </div>
                 
                 <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
@@ -140,6 +149,7 @@ const Loans: React.FC<LoansProps> = ({ profile, loans, transactions, onOpenLoanR
                         onAddValue={() => onOpenAddValueToLoanModal(loan)}
                         onEdit={() => onOpenEditLoanModal(loan)}
                         onOpenDetails={() => onOpenLoanDetailModal(loan)}
+                        onDelete={() => onDeleteLoan(loan.id)}
                     />)
                 ) : (
                     <div className="text-center py-10 px-6 bg-white dark:bg-gray-800 rounded-xl shadow-inner">

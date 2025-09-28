@@ -360,11 +360,13 @@ const Patrimonio: React.FC<PatrimonioProps> = ({
     }, [historyItems, activeFilters, searchTerm]);
 
     const handleDelete = (item: HistoryItemType) => {
-        if (!window.confirm(`¿Estás seguro de que quieres eliminar "${item.name}"? Esta acción no se puede deshacer y también eliminará la transacción asociada si existe.`)) return;
-
-        if (item.patrimonioType === 'asset') onDeleteAsset(item.id);
-        else if (item.patrimonioType === 'loan') onDeleteLoan(item.id);
-        else if (item.patrimonioType === 'liability') onDeleteLiability(item.id);
+        if (item.patrimonioType === 'asset') {
+            onDeleteAsset(item.id);
+        } else if (item.patrimonioType === 'loan') {
+            onDeleteLoan(item.id);
+        } else if (item.patrimonioType === 'liability') {
+            onDeleteLiability(item.id);
+        }
     };
 
 

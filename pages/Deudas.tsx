@@ -1,6 +1,7 @@
 import React from 'react';
 import { Page, Liability, Profile } from '../types';
 import ArrowLeftIcon from '../components/icons/ArrowLeftIcon';
+import TrashIcon from '../components/icons/TrashIcon';
 
 interface DeudasProps {
   profile: Profile;
@@ -11,9 +12,10 @@ interface DeudasProps {
   onOpenDebtDetailModal: (liability: Liability) => void;
   onNavigate: (page: Page) => void;
   currency: string;
+  onDeleteDebt: (liabilityId: string) => void;
 }
 
-const Deudas: React.FC<DeudasProps> = ({ profile, liabilities, onOpenDebtPaymentModal, onOpenAddValueToDebtModal, onOpenEditDebtModal, onOpenDebtDetailModal, onNavigate, currency }) => {
+const Deudas: React.FC<DeudasProps> = ({ profile, liabilities, onOpenDebtPaymentModal, onOpenAddValueToDebtModal, onOpenEditDebtModal, onOpenDebtDetailModal, onNavigate, currency, onDeleteDebt }) => {
     
     const formatCurrency = (amount: number) => {
         const locale = currency === 'COP' ? 'es-CO' : (currency === 'CLP' ? 'es-CL' : 'es-ES');
@@ -25,7 +27,7 @@ const Deudas: React.FC<DeudasProps> = ({ profile, liabilities, onOpenDebtPayment
         }).format(amount);
     };
 
-    const DebtCard: React.FC<{ liability: Liability, onRegisterPayment: () => void, onAddValue: () => void, onEdit: () => void, onOpenDetails: () => void }> = ({ liability, onRegisterPayment, onAddValue, onEdit, onOpenDetails }) => {
+    const DebtCard: React.FC<{ liability: Liability, onRegisterPayment: () => void, onAddValue: () => void, onEdit: () => void, onOpenDetails: () => void, onDelete: () => void }> = ({ liability, onRegisterPayment, onAddValue, onEdit, onOpenDetails, onDelete }) => {
         const paidAmount = liability.originalAmount - liability.amount;
         const progress = liability.originalAmount > 0 ? (paidAmount / liability.originalAmount) * 100 : 0;
         
@@ -68,6 +70,13 @@ const Deudas: React.FC<DeudasProps> = ({ profile, liabilities, onOpenDebtPayment
                         <h3 className="font-bold text-lg text-gray-800 dark:text-gray-100 truncate">{liability.name}</h3>
                         <span className="text-xs text-gray-400 dark:text-gray-500 flex-shrink-0">{formattedDate}</span>
                     </div>
+                    <button
+                        onClick={(e) => { e.stopPropagation(); onDelete(); }}
+                        className="p-2 -mt-2 -mr-2 rounded-full text-gray-400 hover:text-red-500 hover:bg-red-500/10 transition-colors"
+                        aria-label={`Eliminar deuda ${liability.name}`}
+                    >
+                        <TrashIcon className="w-5 h-5" />
+                    </button>
                 </div>
                 
                 <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
@@ -137,6 +146,7 @@ const Deudas: React.FC<DeudasProps> = ({ profile, liabilities, onOpenDebtPayment
                         onAddValue={() => onOpenAddValueToDebtModal(liability)}
                         onEdit={() => onOpenEditDebtModal(liability)}
                         onOpenDetails={() => onOpenDebtDetailModal(liability)}
+                        onDelete={() => onDeleteDebt(liability.id)}
                     />)
                 ) : (
                     <div className="text-center py-10 px-6 bg-white dark:bg-gray-800 rounded-xl shadow-inner">
