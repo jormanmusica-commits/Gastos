@@ -370,6 +370,37 @@ const App: React.FC = () => {
 
   const activeProfile = useMemo(() => profiles.find(p => p.id === activeProfileId), [profiles, activeProfileId]);
 
+  // Effect to synchronize viewingDebt state with the main profile state
+  // This ensures the detail modal always shows fresh data after an update
+  useEffect(() => {
+    if (viewingDebt && activeProfile) {
+        const currentVersionInProfile = activeProfile.data.liabilities.find(l => l.id === viewingDebt.id);
+        if (currentVersionInProfile) {
+            // Deep compare to prevent infinite loops. Stringify is simple and sufficient here.
+            if (JSON.stringify(currentVersionInProfile) !== JSON.stringify(viewingDebt)) {
+                setViewingDebt(currentVersionInProfile);
+            }
+        } else {
+            // The debt was deleted, so close the modal.
+            setViewingDebt(null);
+        }
+    }
+  }, [activeProfile, viewingDebt]);
+
+  // Similar effect for viewingLoan
+  useEffect(() => {
+    if (viewingLoan && activeProfile) {
+        const currentVersionInProfile = activeProfile.data.loans.find(l => l.id === viewingLoan.id);
+        if (currentVersionInProfile) {
+            if (JSON.stringify(currentVersionInProfile) !== JSON.stringify(viewingLoan)) {
+                setViewingLoan(currentVersionInProfile);
+            }
+        } else {
+            setViewingLoan(null);
+        }
+    }
+  }, [activeProfile, viewingLoan]);
+
   const [safeAreaBottomPx, setSafeAreaBottomPx] = useState(0);
 
   useEffect(() => {

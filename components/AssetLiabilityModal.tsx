@@ -56,7 +56,7 @@ const AssetLiabilityModal: React.FC<AssetLiabilityModalProps> = ({
             setDetails('');
             setAmount('');
             setDate(new Date().toISOString().split('T')[0]);
-            setIsInitial(false);
+            setIsInitial(type === 'liability'); // Debts are always initial now
             setIsKeypadVisible(false);
             
             const firstValidSource = bankAccounts.find(b => (balancesByMethod[b.id] || 0) > 0);
@@ -115,7 +115,7 @@ const AssetLiabilityModal: React.FC<AssetLiabilityModalProps> = ({
             return;
         }
         
-        const sourceRequired = isAsset || ((isLoan || isLiability) && !isInitial);
+        const sourceRequired = isAsset || (isLoan && !isInitial);
         if (sourceRequired) {
              if (!sourceMethodId) {
                 setError('Debes seleccionar una cuenta.');
@@ -132,8 +132,8 @@ const AssetLiabilityModal: React.FC<AssetLiabilityModalProps> = ({
             onCreateSaving(numericAmount, sourceMethodId, date);
         } else if (isLoan) {
             onSaveLoan(name, numericAmount, isInitial ? '' : sourceMethodId, date, isInitial, details);
-        } else { // isLiability
-            onSaveLiability(name, details, numericAmount, isInitial ? '' : sourceMethodId, date, isInitial);
+        } else { // isLiability - always initial now
+            onSaveLiability(name, details, numericAmount, '', date, true);
         }
         onClose();
     };
@@ -301,7 +301,7 @@ const AssetLiabilityModal: React.FC<AssetLiabilityModalProps> = ({
                             min={isAsset ? minDate : undefined}
                         />
                     </div>
-                     {(isLoan || isLiability) && (
+                     {isLoan && (
                         <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400 pt-2">
                             <input
                                 type="checkbox"
@@ -316,7 +316,7 @@ const AssetLiabilityModal: React.FC<AssetLiabilityModalProps> = ({
                             </label>
                         </div>
                     )}
-                    {(isAsset || ((isLoan || isLiability) && !isInitial)) && (
+                    {(isAsset || (isLoan && !isInitial)) && (
                         <div className="animate-fade-in">
                             <label htmlFor="source-method" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                 {isLiability ? "Depositar en" : "Origen de los fondos"}
