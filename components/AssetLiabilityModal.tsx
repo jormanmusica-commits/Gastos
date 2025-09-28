@@ -3,6 +3,7 @@ import { BankAccount } from '../types';
 import CloseIcon from './icons/CloseIcon';
 import CustomDatePicker from './CustomDatePicker';
 import BackspaceIcon from './icons/BackspaceIcon';
+import CheckIcon from './icons/CheckIcon';
 
 const CASH_METHOD_ID = 'efectivo';
 
@@ -245,15 +246,23 @@ const AssetLiabilityModal: React.FC<AssetLiabilityModalProps> = ({
                             <KeypadButton onClick={() => handleNumberClick('4')} ariaLabel="4">4</KeypadButton>
                             <KeypadButton onClick={() => handleNumberClick('5')} ariaLabel="5">5</KeypadButton>
                             <KeypadButton onClick={() => handleNumberClick('6')} ariaLabel="6">6</KeypadButton>
-                            <KeypadButton onClick={() => setAmount('')} ariaLabel="Limpiar">C</KeypadButton>
-
+                            
+                            <button
+                                type="button"
+                                onClick={() => setIsKeypadVisible(false)}
+                                aria-label="Confirmar monto"
+                                className="row-span-3 h-full flex items-center justify-center rounded-lg text-white transition-colors active:brightness-90"
+                                style={{ backgroundColor: modalConfig.themeColor }}
+                            >
+                                <CheckIcon className="w-8 h-8" />
+                            </button>
+        
                             <KeypadButton onClick={() => handleNumberClick('1')} ariaLabel="1">1</KeypadButton>
                             <KeypadButton onClick={() => handleNumberClick('2')} ariaLabel="2">2</KeypadButton>
                             <KeypadButton onClick={() => handleNumberClick('3')} ariaLabel="3">3</KeypadButton>
-                            <div />
-
-                            <KeypadButton onClick={handleCommaClick} ariaLabel="Coma">,</KeypadButton>
+        
                             <KeypadButton onClick={() => handleNumberClick('0')} className="col-span-2" ariaLabel="0">0</KeypadButton>
+                            <KeypadButton onClick={handleCommaClick} ariaLabel="Coma">,</KeypadButton>
                         </div>
                     </div>
 
@@ -261,7 +270,7 @@ const AssetLiabilityModal: React.FC<AssetLiabilityModalProps> = ({
                         <>
                             <div>
                                 <label htmlFor="item-name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                    {isLoan ? "Título" : "Descripción"}
+                                    Título
                                 </label>
                                 <input
                                     type="text"
