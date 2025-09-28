@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { Liability, Transaction, BankAccount } from '../types';
 import CloseIcon from './icons/CloseIcon';
 import EditIcon from './icons/EditIcon';
+import TrashIcon from './icons/TrashIcon';
 
 const CASH_METHOD_ID = 'efectivo';
 
@@ -15,10 +16,13 @@ interface DebtDetailModalProps {
   bankAccounts: BankAccount[];
   currency: string;
   onOpenEditDebtAdditionModal: (debt: Liability, addition: DebtIncoming) => void;
+  onDeleteTransaction: (transactionId: string) => void;
+  onDeleteInitialAddition: (debtId: string, additionId: string) => void;
 }
 
 const DebtDetailModal: React.FC<DebtDetailModalProps> = ({
-  isOpen, onClose, debt, transactions, bankAccounts, currency, onOpenEditDebtAdditionModal
+  isOpen, onClose, debt, transactions, bankAccounts, currency, onOpenEditDebtAdditionModal,
+  onDeleteTransaction, onDeleteInitialAddition
 }) => {
   if (!isOpen || !debt) return null;
 
@@ -182,16 +186,33 @@ const DebtDetailModal: React.FC<DebtDetailModalProps> = ({
                               </span>
                             )}
                           </div>
-                           <div className="flex items-center gap-2">
+                           <div className="flex items-center gap-1">
                                 <span className="font-semibold text-red-500">{formatCurrency(incoming.amount)}</span>
-                                {incoming.isInitial && (
-                                    <button
-                                        onClick={() => onOpenEditDebtAdditionModal(debt, incoming)}
-                                        className="p-1 rounded-full text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
-                                        aria-label="Editar ampliación"
-                                    >
-                                        <EditIcon className="w-4 h-4" />
-                                    </button>
+                                {incoming.isInitial ? (
+                                    <>
+                                      <button
+                                          onClick={(e) => { e.stopPropagation(); onOpenEditDebtAdditionModal(debt, incoming); }}
+                                          className="p-1.5 rounded-full text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600 hover:text-blue-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                                          aria-label="Editar ampliación"
+                                      >
+                                          <EditIcon className="w-4 h-4" />
+                                      </button>
+                                      <button
+                                          onClick={(e) => { e.stopPropagation(); onDeleteInitialAddition(debt.id, incoming.id); }}
+                                          className="p-1.5 rounded-full text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                                          aria-label="Eliminar ampliación"
+                                      >
+                                          <TrashIcon className="w-4 h-4" />
+                                      </button>
+                                    </>
+                                ) : (
+                                  <button
+                                      onClick={(e) => { e.stopPropagation(); onDeleteTransaction(incoming.id); }}
+                                      className="p-1.5 rounded-full text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                                      aria-label="Eliminar ampliación"
+                                  >
+                                      <TrashIcon className="w-4 h-4" />
+                                  </button>
                                 )}
                             </div>
                         </div>

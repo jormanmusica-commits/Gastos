@@ -1386,6 +1386,31 @@ const App: React.FC = () => {
         setEditingLoanAddition(null);
     }, [updateActiveProfileData]);
 
+    const handleDeleteLoanAddition = useCallback((loanId: string, additionId: string) => {
+        if (!window.confirm('¿Estás seguro de que quieres eliminar esta ampliación? Esta acción es irreversible.')) {
+            return;
+        }
+        updateActiveProfileData(data => {
+            const updatedLoans = (data.loans || []).map(loan => {
+                if (loan.id === loanId) {
+                    const additionToDelete = (loan.initialAdditions || []).find(add => add.id === additionId);
+                    if (!additionToDelete) return loan;
+    
+                    const updatedAdditions = (loan.initialAdditions || []).filter(add => add.id !== additionId);
+                    
+                    return {
+                        ...loan,
+                        amount: loan.amount - additionToDelete.amount,
+                        originalAmount: loan.originalAmount - additionToDelete.amount,
+                        initialAdditions: updatedAdditions,
+                    };
+                }
+                return loan;
+            });
+            return { ...data, loans: updatedLoans };
+        });
+    }, [updateActiveProfileData]);
+
     const handleAddValueToDebt = useCallback((debtId: string, amount: number, destinationMethodId: string, date: string, isInitial: boolean, details: string) => {
         if (!activeProfile) return;
         
@@ -1472,6 +1497,31 @@ const App: React.FC = () => {
             return { ...data, liabilities: updatedLiabilities };
         });
         setEditingDebtAddition(null);
+    }, [updateActiveProfileData]);
+
+    const handleDeleteDebtAddition = useCallback((debtId: string, additionId: string) => {
+        if (!window.confirm('¿Estás seguro de que quieres eliminar esta ampliación? Esta acción es irreversible.')) {
+            return;
+        }
+        updateActiveProfileData(data => {
+            const updatedLiabilities = (data.liabilities || []).map(debt => {
+                if (debt.id === debtId) {
+                    const additionToDelete = (debt.initialAdditions || []).find(add => add.id === additionId);
+                    if (!additionToDelete) return debt;
+    
+                    const updatedAdditions = (debt.initialAdditions || []).filter(add => add.id !== additionId);
+                    
+                    return {
+                        ...debt,
+                        amount: debt.amount - additionToDelete.amount,
+                        originalAmount: debt.originalAmount - additionToDelete.amount,
+                        initialAdditions: updatedAdditions,
+                    };
+                }
+                return debt;
+            });
+            return { ...data, liabilities: updatedLiabilities };
+        });
     }, [updateActiveProfileData]);
 
     const handleAhorroClick = useCallback(() => { setModalConfig({ type: 'asset' }); setIsAssetLiabilityModalOpen(true); }, []);
@@ -1775,6 +1825,8 @@ const App: React.FC = () => {
             bankAccounts={activeProfile.data.bankAccounts}
             currency={activeProfile.currency}
             onOpenEditLoanAdditionModal={(loan, addition) => setEditingLoanAddition({ loan, addition })}
+            onDeleteTransaction={handleDeleteTransaction}
+            onDeleteInitialAddition={handleDeleteLoanAddition}
         />
         <EditLoanAdditionModal
             isOpen={!!editingLoanAddition}
@@ -1807,6 +1859,8 @@ const App: React.FC = () => {
             bankAccounts={activeProfile.data.bankAccounts}
             currency={activeProfile.currency}
             onOpenEditDebtAdditionModal={(debt, addition) => setEditingDebtAddition({ debt, addition })}
+            onDeleteTransaction={handleDeleteTransaction}
+            onDeleteInitialAddition={handleDeleteDebtAddition}
         />
         <EditDebtAdditionModal
             isOpen={!!editingDebtAddition}

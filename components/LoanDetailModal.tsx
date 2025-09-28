@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { Loan, Transaction, BankAccount } from '../types';
 import CloseIcon from './icons/CloseIcon';
 import EditIcon from './icons/EditIcon';
+import TrashIcon from './icons/TrashIcon';
 
 const CASH_METHOD_ID = 'efectivo';
 
@@ -15,10 +16,13 @@ interface LoanDetailModalProps {
   bankAccounts: BankAccount[];
   currency: string;
   onOpenEditLoanAdditionModal: (loan: Loan, addition: LoanOutgoing) => void;
+  onDeleteTransaction: (transactionId: string) => void;
+  onDeleteInitialAddition: (loanId: string, additionId: string) => void;
 }
 
 const LoanDetailModal: React.FC<LoanDetailModalProps> = ({
-  isOpen, onClose, loan, transactions, bankAccounts, currency, onOpenEditLoanAdditionModal
+  isOpen, onClose, loan, transactions, bankAccounts, currency, onOpenEditLoanAdditionModal,
+  onDeleteTransaction, onDeleteInitialAddition
 }) => {
   if (!isOpen || !loan) return null;
 
@@ -182,15 +186,32 @@ const LoanDetailModal: React.FC<LoanDetailModalProps> = ({
                               </span>
                             )}
                           </div>
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-1">
                             <span className="font-semibold text-blue-500">{formatCurrency(outgoing.amount)}</span>
-                            {outgoing.isInitial && outgoing.amount === 0 && (
+                            {outgoing.isInitial ? (
+                                <>
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); onOpenEditLoanAdditionModal(loan, outgoing); }}
+                                        className="p-1.5 rounded-full text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600 hover:text-blue-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                                        aria-label="Editar ampliación"
+                                    >
+                                        <EditIcon className="w-4 h-4" />
+                                    </button>
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); onDeleteInitialAddition(loan.id, outgoing.id); }}
+                                        className="p-1.5 rounded-full text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                                        aria-label="Eliminar ampliación"
+                                    >
+                                        <TrashIcon className="w-4 h-4" />
+                                    </button>
+                                </>
+                            ) : (
                                 <button
-                                    onClick={() => onOpenEditLoanAdditionModal(loan, outgoing)}
-                                    className="p-1 rounded-full text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600 hover:text-blue-500 opacity-0 group-hover:opacity-100 transition-opacity"
-                                    aria-label="Editar ampliación"
+                                    onClick={(e) => { e.stopPropagation(); onDeleteTransaction(outgoing.id); }}
+                                    className="p-1.5 rounded-full text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                                    aria-label="Eliminar ampliación"
                                 >
-                                    <EditIcon className="w-4 h-4" />
+                                    <TrashIcon className="w-4 h-4" />
                                 </button>
                             )}
                           </div>
