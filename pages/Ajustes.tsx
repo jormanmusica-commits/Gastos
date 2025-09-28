@@ -1,6 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Theme, Category, BankAccount } from '../types';
-import ThemeToggle from '../components/ThemeToggle';
+import { Category, BankAccount } from '../types';
 import CategoryModal from '../components/CategoryModal';
 import BankAccountModal from '../components/BankAccountModal';
 import ExportIcon from '../components/icons/ExportIcon';
@@ -10,8 +9,6 @@ import WarningIcon from '../components/icons/WarningIcon';
 import FixedExpenseModal from '../components/FixedExpenseModal';
 
 interface AjustesProps {
-  theme: Theme;
-  onToggleTheme: () => void;
   categories: Category[];
   onAddCategory: (name: string, icon: string) => void;
   onUpdateCategory: (id: string, name: string, icon: string) => void;
@@ -28,7 +25,6 @@ interface AjustesProps {
 }
 
 const Ajustes: React.FC<AjustesProps> = ({ 
-    theme, onToggleTheme, 
     categories, onAddCategory, onUpdateCategory, onDeleteCategory,
     bankAccounts, onAddBankAccount, onUpdateBankAccount, onDeleteBankAccount,
     onExportData,
@@ -79,14 +75,6 @@ const Ajustes: React.FC<AjustesProps> = ({
         </div>
         
         <div className="space-y-6">
-          <div>
-            <h3 className="text-lg font-semibold text-gray-600 dark:text-gray-400 mb-2">Apariencia</h3>
-            <div className="flex justify-between items-center p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-              <span className="font-medium text-gray-700 dark:text-gray-300">Tema</span>
-              <ThemeToggle theme={theme} onToggle={onToggleTheme} />
-            </div>
-          </div>
-          
           <div>
             <h3 className="text-lg font-semibold text-gray-600 dark:text-gray-400 mb-2">Gestión</h3>
             <div className="space-y-2">

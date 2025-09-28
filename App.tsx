@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { Theme, Transaction, Page, Category, BankAccount, FixedExpense, Profile, ProfileData, Asset, Liability, Loan, ExportSummary, ExportPayload, QuickExpense } from './types';
+import { Transaction, Page, Category, BankAccount, FixedExpense, Profile, ProfileData, Asset, Liability, Loan, ExportSummary, ExportPayload, QuickExpense } from './types';
 import Inicio from './pages/Inicio';
 import Resumen from './pages/Resumen';
 import Ajustes from './pages/Ajustes';
@@ -238,11 +238,6 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({ menuItems, 
 
 
 const App: React.FC = () => {
-  const [theme, setTheme] = useState<Theme>(() => {
-    const savedTheme = localStorage.getItem('theme');
-    return (savedTheme as Theme) || Theme.DARK;
-  });
-
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
 
@@ -430,13 +425,9 @@ const App: React.FC = () => {
   }, [safeAreaBottomPx]);
 
   useEffect(() => {
-    if (theme === Theme.DARK) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-    localStorage.setItem('theme', theme);
-  }, [theme]);
+    document.documentElement.classList.add('dark');
+    localStorage.removeItem('theme'); // Clean up old storage
+  }, []);
   
   useEffect(() => {
     if (profiles.length > 0) {
@@ -522,10 +513,6 @@ const App: React.FC = () => {
         p.id === activeProfileId ? { ...p, data: updater(p.data) } : p
     ));
   }, [activeProfileId]);
-
-  const handleToggleTheme = useCallback(() => {
-    setTheme(prevTheme => prevTheme === Theme.LIGHT ? Theme.DARK : Theme.LIGHT);
-  }, []);
   
   const handleAddTransaction = useCallback((description: string, amount: number, date: string, type: 'income' | 'expense', paymentMethodId: string, categoryId?: string) => {
     if (!activeProfile) return;
@@ -840,7 +827,6 @@ const App: React.FC = () => {
     }));
 
     setIsAssetLiabilityModalOpen(false);
-    setModalConfig(null);
   }, [activeProfile, balancesByMethod, updateActiveProfileData, categories]);
 
   const handleSpendFromSavings = useCallback((amountToSpend: number, description: string, date: string, categoryId: string | undefined, sourceMethodId: string) => {
@@ -1088,7 +1074,7 @@ const App: React.FC = () => {
   }, [activeProfile, balance, balancesByMethod]);
 
   const handleExportAllDataToJson = useCallback(async () => {
-    const dataToExport = { profiles, categories, theme, fabPosition };
+    const dataToExport = { profiles, categories, fabPosition };
     const jsonString = JSON.stringify(dataToExport, null, 2);
     const blob = new Blob([jsonString], { type: 'application/json' });
     
@@ -1127,7 +1113,7 @@ const App: React.FC = () => {
       document.body.removeChild(link);
       URL.revokeObjectURL(url); // Clean up the object URL
     }
-  }, [profiles, categories, theme, fabPosition]);
+  }, [profiles, categories, fabPosition]);
 
   const handleImportDataFromJson = useCallback((file: File) => {
     if (!window.confirm('¿Estás seguro de que quieres importar estos datos? Esto sobreescribirá todos los datos actuales.')) {
@@ -1143,7 +1129,6 @@ const App: React.FC = () => {
                     setProfiles(data.profiles);
                     setCategories(data.categories || defaultCategories);
                     setActiveProfileId(null);
-                    setTheme(data.theme || Theme.DARK);
                     setFabPosition(data.fabPosition || getDefaultFabPosition());
                     alert('Datos importados con éxito.');
                 } else {
@@ -1536,7 +1521,7 @@ const App: React.FC = () => {
     
     if (!activeProfileId || !activeProfile) {
         return (
-          <div className={`app-container ${theme}`}>
+          <div className="app-container dark">
             <Inicio
               profiles={profiles}
               onSelectProfile={(id) => {
@@ -1562,7 +1547,7 @@ const App: React.FC = () => {
 
   return (
     <div
-        className={`app-container ${theme} h-full flex flex-col bg-gray-50 dark:bg-gray-900`}
+        className="app-container h-full flex flex-col bg-gray-50 dark:bg-gray-900"
         onTouchStart={!isAnyModalOpen && activeProfileId ? handleTouchStart : undefined}
         onTouchMove={!isAnyModalOpen && activeProfileId ? handleTouchMove : undefined}
         onTouchEnd={!isAnyModalOpen && activeProfileId ? handleTouchEnd : undefined}
@@ -1585,8 +1570,6 @@ const App: React.FC = () => {
                 categories={categories}
             /> }
             { currentPage === 'ajustes' && <Ajustes 
-                theme={theme}
-                onToggleTheme={handleToggleTheme}
                 categories={categories}
                 onAddCategory={handleAddCategory}
                 onUpdateCategory={handleUpdateCategory}
