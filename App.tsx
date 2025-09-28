@@ -840,6 +840,7 @@ const App: React.FC = () => {
     }));
 
     setIsAssetLiabilityModalOpen(false);
+    setModalConfig(null);
   }, [activeProfile, balancesByMethod, updateActiveProfileData, categories]);
 
   const handleSpendFromSavings = useCallback((amountToSpend: number, description: string, date: string, categoryId: string | undefined, sourceMethodId: string) => {
@@ -1724,7 +1725,10 @@ const App: React.FC = () => {
         />
         { modalConfig && <AssetLiabilityModal 
             isOpen={isAssetLiabilityModalOpen}
-            onClose={() => setIsAssetLiabilityModalOpen(false)}
+            onClose={() => {
+                setIsAssetLiabilityModalOpen(false);
+                setModalConfig(null);
+            }}
             onSaveLiability={handleSaveLiability}
             onSaveLoan={handleSaveLoan}
             onCreateSaving={handleCreateSaving}

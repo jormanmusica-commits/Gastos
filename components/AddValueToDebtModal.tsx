@@ -20,7 +20,9 @@ const AddValueToDebtModal: React.FC<AddValueToDebtModalProps> = ({
   isOpen, onClose, debt, bankAccounts, balancesByMethod, onAddValue, currency
 }) => {
   const [amountToAdd, setAmountToAdd] = useState('');
+  const [destinationMethodId, setDestinationMethodId] = useState<string>('');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [isInitial, setIsInitial] = useState(false);
   const [details, setDetails] = useState('');
   const [error, setError] = useState('');
 
@@ -33,15 +35,24 @@ const AddValueToDebtModal: React.FC<AddValueToDebtModalProps> = ({
       maximumFractionDigits: 2,
     }).format(amount);
   };
+  
+  const paymentDestinations = useMemo(() => [
+    { id: CASH_METHOD_ID, name: 'Efectivo', balance: balancesByMethod[CASH_METHOD_ID] || 0, color: '#008f39' },
+    ...bankAccounts.map(b => ({ id: b.id, name: b.name, balance: balancesByMethod[b.id] || 0, color: b.color }))
+  ], [bankAccounts, balancesByMethod]);
 
   useEffect(() => {
     if (isOpen && debt) {
       setAmountToAdd('');
       setError('');
       setDate(new Date().toISOString().split('T')[0]);
+      setIsInitial(false);
       setDetails('');
+      if (!destinationMethodId || !paymentDestinations.find(p => p.id === destinationMethodId)) {
+        setDestinationMethodId(paymentDestinations.length > 0 ? paymentDestinations[0].id : '');
+      }
     }
-  }, [isOpen, debt]);
+  }, [isOpen, debt, paymentDestinations, destinationMethodId]);
   
   const numericAmountToAdd = parseFloat(amountToAdd || '0');
 
@@ -54,15 +65,31 @@ const AddValueToDebtModal: React.FC<AddValueToDebtModalProps> = ({
         return;
     }
     
+    // If it's not an initial movement and an amount is being transferred, validate the destination.
+    if (!isInitial && numericAmountToAdd > 0) {
+        if (!destinationMethodId) {
+            setError('Debes seleccionar una cuenta de destino.');
+            return;
+        }
+    }
+    
     if (!date) {
         setError('Debes seleccionar una fecha.');
         return;
     }
-    // Always submit as an "initial" (non-transactional) movement
-    onAddValue(debt.id, numericAmountToAdd, '', date, true, details);
+    onAddValue(debt.id, numericAmountToAdd, destinationMethodId, date, isInitial, details);
   };
 
   if (!isOpen || !debt) return null;
+
+  const selectedDestinationDetails = paymentDestinations.find(s => s.id === destinationMethodId);
+  const destinationSelectStyle: React.CSSProperties = selectedDestinationDetails ? {
+      borderColor: selectedDestinationDetails.color,
+      color: selectedDestinationDetails.color,
+      fontWeight: '600',
+  } : {};
+  
+  const destinationIsInvalid = !isInitial && numericAmountToAdd > 0 && !destinationMethodId;
   
   return (
     <div
@@ -132,6 +159,46 @@ const AddValueToDebtModal: React.FC<AddValueToDebtModalProps> = ({
               displayMode="modal"
             />
           </div>
+
+          {/* Other settings */}
+          <div className="space-y-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+            <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
+              <input
+                type="checkbox"
+                id="is-initial-add-value-debt-checkbox"
+                checked={isInitial}
+                onChange={(e) => setIsInitial(e.target.checked)}
+                className="h-4 w-4 rounded border-gray-300 text-red-600 focus:ring-red-500"
+                style={{ accentColor: '#ef4444' }}
+              />
+              <label htmlFor="is-initial-add-value-debt-checkbox" className="cursor-pointer">
+                Registrar como movimiento inicial (no afectará al saldo actual)
+              </label>
+            </div>
+            
+            {!isInitial && (
+            <div className="animate-fade-in">
+              <label htmlFor="destination-method" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Depositar en
+              </label>
+              <select
+                id="destination-method"
+                value={destinationMethodId}
+                onChange={(e) => setDestinationMethodId(e.target.value)}
+                disabled={numericAmountToAdd <= 0}
+                className="w-full px-3 py-2 border-2 border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-red-500 bg-gray-50 dark:bg-gray-700 transition-colors disabled:opacity-50"
+                style={destinationSelectStyle}
+              >
+                <option value="" disabled>Seleccionar destino</option>
+                {paymentDestinations.map(dest => (
+                  <option key={dest.id} value={dest.id} style={{ fontWeight: 'normal' }}>
+                    {dest.name} ({formatCurrency(dest.balance)})
+                  </option>
+                ))}
+              </select>
+            </div>
+            )}
+          </div>
         </div>
 
         <footer className="p-4 border-t border-gray-200 dark:border-gray-700 mt-auto">
@@ -139,7 +206,7 @@ const AddValueToDebtModal: React.FC<AddValueToDebtModalProps> = ({
           
           <button
             onClick={handleSubmit}
-            disabled={numericAmountToAdd < 0}
+            disabled={numericAmountToAdd < 0 || destinationIsInvalid}
             className="w-full bg-red-500 text-white font-bold py-3 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-gray-900 transition-colors hover:bg-red-600 disabled:bg-gray-400 disabled:cursor-not-allowed"
           >
             Añadir {formatCurrency(numericAmountToAdd)}
