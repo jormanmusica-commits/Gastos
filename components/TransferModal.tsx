@@ -93,7 +93,7 @@ const TransferModal: React.FC<TransferModalProps> = ({
     e.preventDefault();
     setError('');
 
-    const numericAmount = parseFloat(amount.replace(',', '.'));
+    const numericAmount = parseFloat(amount);
     if (!fromMethod || !toMethod || !amount.trim() || !date.trim()) {
       setError('Todos los campos son obligatorios.');
       return;
@@ -193,7 +193,6 @@ const fromSelectStyle: React.CSSProperties = selectedFromMethodDetails ? {
                     onChange={setAmount}
                     label="Cantidad"
                     themeColor="#3b82f6"
-                    placeholder="100,00"
                     currency={currency}
                 />
                  <div>

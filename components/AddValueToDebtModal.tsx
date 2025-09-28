@@ -43,7 +43,7 @@ const AddValueToDebtModal: React.FC<AddValueToDebtModalProps> = ({
     }
   }, [isOpen, debt]);
   
-  const numericAmountToAdd = parseFloat((amountToAdd || '0').replace(',', '.'));
+  const numericAmountToAdd = parseFloat(amountToAdd || '0');
 
   const handleSubmit = () => {
     if (!debt) return;

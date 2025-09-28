@@ -8,6 +8,7 @@ import CategoryModal from './CategoryModal';
 import CheckIcon from './icons/CheckIcon';
 import GiftIcon from './icons/GiftIcon';
 import CategoryIcon from './CategoryIcon';
+import AmountInput from './AmountInput';
 
 interface FixedExpenseModalProps {
   isOpen: boolean;
@@ -93,8 +94,7 @@ const FixedExpenseModal: React.FC<FixedExpenseModalProps> = ({
 
   const handleAdd = () => {
     if (!onAddFixedExpense) return;
-    const sanitizedAmount = newExpense.amount.replace(',', '.');
-    const numericAmount = parseFloat(sanitizedAmount);
+    const numericAmount = parseFloat(newExpense.amount);
     if (newExpense.name.trim() && !isNaN(numericAmount) && numericAmount > 0) {
       onAddFixedExpense(newExpense.name.trim(), numericAmount, newExpense.categoryId || undefined);
       setNewExpense({ name: '', amount: '', categoryId: '' });
@@ -215,22 +215,19 @@ const FixedExpenseModal: React.FC<FixedExpenseModalProps> = ({
                   <span className="text-xl font-bold text-red-500">{formatCurrency(totalFixedExpenses)}</span>
               </div>
               <div className="space-y-3">
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                <div className="grid grid-cols-1 gap-2">
                   <input
                     type="text"
                     value={newExpense.name}
                     onChange={(e) => setNewExpense({...newExpense, name: e.target.value})}
                     placeholder="Nombre (ej. Alquiler)"
-                    className="sm:col-span-2 w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-[#008f39] focus:border-[#008f39] bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 dark:placeholder-gray-400"
-                  />
-                  <input
-                    type="text"
-                    value={newExpense.amount}
-                    onChange={(e) => setNewExpense({...newExpense, amount: e.target.value})}
-                    placeholder="Monto"
-                    pattern="[0-9]+([,\.][0-9]{1,2})?"
-                    inputMode="decimal"
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-[#008f39] focus:border-[#008f39] bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 dark:placeholder-gray-400"
+                  />
+                  <AmountInput
+                    value={newExpense.amount}
+                    onChange={(val) => setNewExpense(prev => ({...prev, amount: val}))}
+                    themeColor="#008f39"
+                    currency={currency}
                   />
                 </div>
                 <div>

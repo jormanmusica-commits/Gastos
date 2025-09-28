@@ -30,6 +30,7 @@ const QuickExpenseModal: React.FC<QuickExpenseModalProps> = ({
 }) => {
   const [newExpense, setNewExpense] = useState({ name: '', amount: '', categoryId: '' });
   const [editingExpense, setEditingExpense] = useState<QuickExpense | null>(null);
+  const [editingAmount, setEditingAmount] = useState('');
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
 
   useEffect(() => {
@@ -38,6 +39,12 @@ const QuickExpenseModal: React.FC<QuickExpenseModalProps> = ({
         setNewExpense({ name: '', amount: '', categoryId: '' });
     }
   }, [isOpen]);
+
+  useEffect(() => {
+    if (editingExpense) {
+      setEditingAmount(editingExpense.amount.toString());
+    }
+  }, [editingExpense]);
   
   if (!isOpen) return null;
 
@@ -61,14 +68,14 @@ const QuickExpenseModal: React.FC<QuickExpenseModalProps> = ({
   const handleSave = () => {
     if (editingExpense) {
       // Update
-      const numericAmount = parseFloat(editingExpense.amount.toString().replace(',', '.')) || 0;
+      const numericAmount = parseFloat(editingAmount) || 0;
       if (editingExpense.name.trim() && numericAmount > 0) {
         onUpdateQuickExpense(editingExpense.id, editingExpense.name, numericAmount, editingExpense.categoryId, editingExpense.icon);
         setEditingExpense(null);
       }
     } else {
       // Add
-      const numericAmount = parseFloat(newExpense.amount.replace(',', '.')) || 0;
+      const numericAmount = parseFloat(newExpense.amount) || 0;
       if (newExpense.name.trim() && numericAmount > 0) {
         const category = categories.find(c => c.id === newExpense.categoryId);
         onAddQuickExpense(newExpense.name, numericAmount, newExpense.categoryId || undefined, category?.icon || '⚡️');
@@ -84,31 +91,33 @@ const QuickExpenseModal: React.FC<QuickExpenseModalProps> = ({
   };
 
   const renderForm = () => {
-    const expenseData = editingExpense || { name: newExpense.name, amount: newExpense.amount, categoryId: newExpense.categoryId };
-    const setExpenseData = editingExpense 
+    const isEditing = !!editingExpense;
+    const expenseData = isEditing ? editingExpense : newExpense;
+    const amountValue = isEditing ? editingAmount : newExpense.amount;
+    
+    const setExpenseData = isEditing 
       ? (field: keyof QuickExpense, value: any) => setEditingExpense(prev => prev ? { ...prev, [field]: value } : null)
       : (field: keyof typeof newExpense, value: any) => setNewExpense(prev => ({ ...prev, [field]: value }));
+    
+    const setAmount = isEditing ? setEditingAmount : (val: string) => setNewExpense(prev => ({...prev, amount: val}));
       
     const selectedCategory = categories.find(c => c.id === expenseData.categoryId);
 
     return (
       <>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+        <div className="grid grid-cols-1 gap-2">
             <input
                 type="text"
                 value={expenseData.name}
                 onChange={(e) => setExpenseData('name', e.target.value)}
                 placeholder="Nombre (ej. BiciMAD)"
-                className="sm:col-span-2 w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-[#008f39] focus:border-[#008f39] bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-            />
-             <input
-                type="text"
-                value={expenseData.amount.toString()}
-                onChange={(e) => setExpenseData('amount', e.target.value)}
-                placeholder="Monto"
-                pattern="[0-9]+([,\.][0-9]{1,2})?"
-                inputMode="decimal"
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-[#008f39] focus:border-[#008f39] bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+            />
+            <AmountInput
+              value={amountValue}
+              onChange={setAmount}
+              themeColor="#008f39"
+              currency={currency}
             />
         </div>
         <div>

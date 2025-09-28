@@ -60,7 +60,7 @@ const SpendSavingsModal: React.FC<SpendSavingsModalProps> = ({
   const handleSubmit = () => {
     if (!selectedSourceId || !selectedSourceData) return;
     setError('');
-    const numericAmount = parseFloat(amount.replace(',', '.')) || 0;
+    const numericAmount = parseFloat(amount) || 0;
     const totalSavingsFromSource = selectedSourceData.total;
 
     if (numericAmount <= 0) {
@@ -168,7 +168,7 @@ const SpendSavingsModal: React.FC<SpendSavingsModalProps> = ({
                   label="Cantidad a gastar"
                   themeColor="#ef4444"
                   currency={currency}
-                  autoFocus={true}
+                  maxAmount={selectedSourceData.total}
                 />
                 <div>
                   <label htmlFor="spend-description" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">

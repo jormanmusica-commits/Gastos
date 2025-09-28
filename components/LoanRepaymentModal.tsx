@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Loan, BankAccount } from '../types';
 import CloseIcon from './icons/CloseIcon';
 import CustomDatePicker from './CustomDatePicker';
+import AmountInput from './AmountInput';
 
 const CASH_METHOD_ID = 'efectivo';
 
@@ -40,7 +41,7 @@ const LoanRepaymentModal: React.FC<LoanRepaymentModalProps> = ({
 
   useEffect(() => {
     if (isOpen && loan) {
-      setPaymentAmount(loan.amount.toString().replace('.', ','));
+      setPaymentAmount(loan.amount.toString());
       setError('');
       setDate(new Date().toISOString().split('T')[0]);
       if (!paymentMethodId || !paymentDestinations.find(p => p.id === paymentMethodId)) {
@@ -49,22 +50,7 @@ const LoanRepaymentModal: React.FC<LoanRepaymentModalProps> = ({
     }
   }, [isOpen, loan, paymentDestinations, paymentMethodId]);
   
-  const numericPaymentAmount = parseFloat((paymentAmount || '0').replace(',', '.'));
-
-  const handleAmountChange = (value: string) => {
-    if (!loan) return;
-
-    if (value === '' || /^[0-9]*[.,]?[0-9]{0,2}$/.test(value)) {
-        let numericValue = parseFloat(value.replace(',', '.'));
-        if (isNaN(numericValue)) numericValue = 0;
-        
-        if (numericValue > loan.amount) {
-            setPaymentAmount(loan.amount.toString().replace('.', ','));
-        } else {
-            setPaymentAmount(value);
-        }
-    }
-  };
+  const numericPaymentAmount = parseFloat(paymentAmount || '0');
 
   const handleSubmit = () => {
     if (!loan) return;
@@ -121,22 +107,14 @@ const LoanRepaymentModal: React.FC<LoanRepaymentModalProps> = ({
                     <span className="font-mono font-semibold text-blue-500">{formatCurrency(loan.amount)}</span>
                 </div>
             </div>
-             <div>
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Monto recibido:</label>
-                <div className="relative mt-1">
-                    <input
-                        type="text"
-                        inputMode="decimal"
-                        value={paymentAmount}
-                        onChange={(e) => handleAmountChange(e.target.value)}
-                        className="w-full pl-3 pr-12 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                        autoFocus
-                    />
-                    <span className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 dark:text-gray-400 font-semibold">
-                        {currency}
-                    </span>
-                </div>
-            </div>
+            <AmountInput
+                value={paymentAmount}
+                onChange={setPaymentAmount}
+                label="Monto recibido:"
+                themeColor="#3b82f6"
+                currency={currency}
+                maxAmount={loan.amount}
+              />
         </div>
 
 

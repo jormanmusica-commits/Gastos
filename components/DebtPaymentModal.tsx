@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Liability, BankAccount } from '../types';
 import CloseIcon from './icons/CloseIcon';
-import BankIcon from './icons/BankIcon';
+import AmountInput from './AmountInput';
 
 const CASH_METHOD_ID = 'efectivo';
 
@@ -39,7 +39,7 @@ const DebtPaymentModal: React.FC<DebtPaymentModalProps> = ({
 
   useEffect(() => {
     if (isOpen && liability) {
-      setPaymentAmount(liability.amount.toString().replace('.', ','));
+      setPaymentAmount(liability.amount.toString());
       setError('');
       // Pre-select the first available source if none is selected or the current one is invalid
       if (!paymentMethodId || !paymentSources.find(p => p.id === paymentMethodId)) {
@@ -48,23 +48,8 @@ const DebtPaymentModal: React.FC<DebtPaymentModalProps> = ({
     }
   }, [isOpen, liability, paymentMethodId, paymentSources]);
 
-  const numericPaymentAmount = parseFloat((paymentAmount || '0').replace(',', '.'));
+  const numericPaymentAmount = parseFloat(paymentAmount || '0');
   
-  const handleAmountChange = (value: string) => {
-    if (!liability) return;
-
-    if (value === '' || /^[0-9]*[.,]?[0-9]{0,2}$/.test(value)) {
-        let numericValue = parseFloat(value.replace(',', '.'));
-        if (isNaN(numericValue)) numericValue = 0;
-        
-        if (numericValue > liability.amount) {
-            setPaymentAmount(liability.amount.toString().replace('.', ','));
-        } else {
-            setPaymentAmount(value);
-        }
-    }
-  };
-
   const handleSubmit = () => {
     if (!liability) return;
     setError('');
@@ -121,22 +106,14 @@ const DebtPaymentModal: React.FC<DebtPaymentModalProps> = ({
                     <span className="font-mono font-semibold text-red-500">{formatCurrency(liability.amount)}</span>
                 </div>
             </div>
-            <div>
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Monto a pagar:</label>
-                <div className="relative mt-1">
-                    <input
-                        type="text"
-                        inputMode="decimal"
-                        value={paymentAmount}
-                        onChange={(e) => handleAmountChange(e.target.value)}
-                        className="w-full pl-3 pr-12 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-red-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                        autoFocus
-                    />
-                    <span className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 dark:text-gray-400 font-semibold">
-                        {currency}
-                    </span>
-                </div>
-            </div>
+            <AmountInput
+              value={paymentAmount}
+              onChange={setPaymentAmount}
+              label="Monto a pagar:"
+              themeColor="#ef4444"
+              currency={currency}
+              maxAmount={liability.amount}
+            />
         </div>
 
 

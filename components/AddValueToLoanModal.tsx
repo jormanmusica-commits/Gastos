@@ -54,7 +54,7 @@ const AddValueToLoanModal: React.FC<AddValueToLoanModalProps> = ({
     }
   }, [isOpen, loan, paymentSources, sourceMethodId]);
   
-  const numericAmountToAdd = parseFloat((amountToAdd || '0').replace(',', '.'));
+  const numericAmountToAdd = parseFloat(amountToAdd || '0');
 
   const handleSubmit = () => {
     if (!loan) return;

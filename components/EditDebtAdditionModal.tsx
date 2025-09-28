@@ -21,7 +21,7 @@ const EditDebtAdditionModal: React.FC<EditDebtAdditionModalProps> = ({
 
   useEffect(() => {
     if (isOpen && data) {
-      setAmount(data.addition.amount.toString().replace('.', ','));
+      setAmount(data.addition.amount.toString());
       setDetails(data.addition.details || '');
     }
   }, [isOpen, data]);
@@ -31,7 +31,7 @@ const EditDebtAdditionModal: React.FC<EditDebtAdditionModalProps> = ({
   const { debt, addition } = data;
 
   const handleSubmit = () => {
-    const numericAmount = parseFloat(amount.replace(',', '.')) || 0;
+    const numericAmount = parseFloat(amount) || 0;
     if (numericAmount < 0) {
       alert('El monto no puede ser negativo.');
       return;
@@ -79,7 +79,6 @@ const EditDebtAdditionModal: React.FC<EditDebtAdditionModalProps> = ({
             label="Monto de la Ampliación"
             themeColor="#ef4444"
             currency={currency}
-            autoFocus
           />
           <div>
             <label htmlFor="addition-edit-details" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
