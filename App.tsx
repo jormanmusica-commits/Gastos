@@ -34,6 +34,7 @@ import SpendSavingsModal from './components/SpendSavingsModal';
 import GiftFixedExpenseModal from './components/GiftFixedExpenseModal';
 import SwitchIcon from './components/icons/SwitchIcon';
 import QuickExpenseModal from './components/QuickExpenseModal';
+import ConfirmationToast from './components/ConfirmationToast';
 
 
 const CASH_METHOD_ID = 'efectivo';
@@ -240,6 +241,19 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({ menuItems, 
 const App: React.FC = () => {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [toast, setToast] = useState<{ show: boolean, message: string }>({ show: false, message: '' });
+  const toastTimerRef = useRef<number | null>(null);
+
+  const showToast = useCallback((message: string) => {
+    if (toastTimerRef.current) {
+        clearTimeout(toastTimerRef.current);
+    }
+    setToast({ show: true, message });
+    toastTimerRef.current = window.setTimeout(() => {
+        setToast({ show: false, message: '' });
+        toastTimerRef.current = null;
+    }, 1000);
+  }, []);
 
   useEffect(() => {
     const savedGlobalCategoriesJSON = localStorage.getItem('globalCategories');
@@ -586,7 +600,8 @@ const App: React.FC = () => {
     }
     
     updateActiveProfileData(data => ({ ...data, transactions: updatedTransactions }));
-  }, [activeProfile, updateActiveProfileData, categories]);
+    showToast("Transacción realizada");
+  }, [activeProfile, updateActiveProfileData, categories, showToast]);
   
   const handleAddTransfer = useCallback((fromMethodId: string, toMethodId: string, amount: number, date: string): string | void => {
     if (!activeProfile) return "No active profile found.";
@@ -608,10 +623,11 @@ const App: React.FC = () => {
     }
 
     updateActiveProfileData(data => ({ ...data, transactions: updatedTransactions }));
+    showToast("Transacción realizada");
     setIsTransferModalOpen(false);
     setInitialTransferFromId(null);
     setCurrentPage('resumen');
-}, [activeProfile, updateActiveProfileData]);
+}, [activeProfile, updateActiveProfileData, showToast]);
 
   const handleDeleteTransaction = useCallback((id: string) => {
     if (!activeProfile) return;
@@ -771,8 +787,9 @@ const App: React.FC = () => {
     
     // No validation needed as gift transactions don't affect balance.
     updateActiveProfileData(data => ({ ...data, transactions: updatedTransactions }));
+    showToast("Transacción realizada");
     setGiftingFixedExpense(null); // Close modal
-  }, [activeProfile, updateActiveProfileData]);
+  }, [activeProfile, updateActiveProfileData, showToast]);
 
   const handleAddQuickExpense = useCallback((name: string, amount: number, categoryId: string | undefined, icon: string) => {
     if (!activeProfile) return;
@@ -856,9 +873,9 @@ const App: React.FC = () => {
         assets: [...(data.assets || []), newAsset],
         transactions: updatedTransactions,
     }));
-
+    showToast("Transacción realizada");
     setIsAssetLiabilityModalOpen(false);
-  }, [activeProfile, balancesByMethod, updateActiveProfileData, categories]);
+  }, [activeProfile, balancesByMethod, updateActiveProfileData, categories, showToast]);
 
   const handleSpendFromSavings = useCallback((amountToSpend: number, description: string, date: string, categoryId: string | undefined, sourceMethodId: string) => {
     if (!activeProfile) return;
@@ -934,9 +951,9 @@ const App: React.FC = () => {
         assets: updatedAssets,
         transactions: updatedTransactions,
     }));
-
+    showToast("Transacción realizada");
     setIsSpendSavingsModalOpen(false);
-  }, [activeProfile, updateActiveProfileData, categories]);
+  }, [activeProfile, updateActiveProfileData, categories, showToast]);
 
   const handleSaveLiability = useCallback((name: string, details: string, amount: number, destinationMethodId: string, date: string, isInitial: boolean) => {
     if (!activeProfile) return;
@@ -979,10 +996,10 @@ const App: React.FC = () => {
         liabilities: [...(data.liabilities || []), newLiability],
         transactions: updatedTransactions,
     }));
-
+    showToast("Transacción realizada");
     setIsAssetLiabilityModalOpen(false);
     setModalConfig(null);
-  }, [activeProfile, updateActiveProfileData]);
+  }, [activeProfile, updateActiveProfileData, showToast]);
 
   const handleSaveLoan = useCallback((name: string, amount: number, sourceMethodId: string, date: string, isInitial: boolean, details: string) => {
     if (!activeProfile) return;
@@ -1023,9 +1040,10 @@ const App: React.FC = () => {
         loans: [...(data.loans || []), newLoan],
         transactions: updatedTransactions,
     }));
+    showToast("Transacción realizada");
     setIsAssetLiabilityModalOpen(false);
     setModalConfig(null);
-  }, [activeProfile, updateActiveProfileData]);
+  }, [activeProfile, updateActiveProfileData, showToast]);
 
     const handleAddProfile = useCallback((name: string, countryCode: string, currency: string) => {
     const newProfile: Profile = {
@@ -1292,8 +1310,9 @@ const App: React.FC = () => {
         }
 
         updateActiveProfileData(data => ({ ...data, liabilities: updatedLiabilities, transactions: updatedTransactions }));
+        showToast("Transacción realizada");
         setPayingDebt(null);
-    }, [activeProfile, updateActiveProfileData]);
+    }, [activeProfile, updateActiveProfileData, showToast]);
 
     const handleReceiveLoanPayments = useCallback((payments: { loanId: string, amount: number }[], paymentMethodId: string, date: string) => {
         if (!activeProfile) return;
@@ -1326,8 +1345,9 @@ const App: React.FC = () => {
         }
 
         updateActiveProfileData(data => ({ ...data, loans: updatedLoans, transactions: updatedTransactions }));
+        showToast("Transacción realizada");
         setRepayingLoan(null);
-    }, [activeProfile, updateActiveProfileData]);
+    }, [activeProfile, updateActiveProfileData, showToast]);
 
     const handleAddValueToLoan = useCallback((loanId: string, amount: number, sourceMethodId: string, date: string, isInitial: boolean, details: string) => {
         if (!activeProfile) return;
@@ -1367,8 +1387,9 @@ const App: React.FC = () => {
         }
 
         updateActiveProfileData(data => ({ ...data, loans: updatedLoans, transactions: updatedTransactions }));
+        showToast("Transacción realizada");
         setAddingValueToLoan(null);
-    }, [activeProfile, updateActiveProfileData]);
+    }, [activeProfile, updateActiveProfileData, showToast]);
 
     const handleUpdateLoan = useCallback((loanId: string, name: string, details: string, newOriginalAmountStr: string) => {
         updateActiveProfileData(data => {
@@ -1480,8 +1501,9 @@ const App: React.FC = () => {
         }
 
         updateActiveProfileData(data => ({ ...data, liabilities: updatedLiabilities, transactions: updatedTransactions }));
+        showToast("Transacción realizada");
         setAddingValueToDebt(null);
-    }, [activeProfile, updateActiveProfileData]);
+    }, [activeProfile, updateActiveProfileData, showToast]);
     
     const handleUpdateDebt = useCallback((debtId: string, name: string, details: string, newOriginalAmountStr: string) => {
         updateActiveProfileData(data => {
@@ -2028,6 +2050,7 @@ const App: React.FC = () => {
                 safeAreaBottomPx={safeAreaBottomPx}
             />
         )}
+        <ConfirmationToast show={toast.show} message={toast.message} />
     </div>
   );
 };
