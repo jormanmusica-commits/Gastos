@@ -202,6 +202,7 @@ const fromSelectStyle: React.CSSProperties = selectedFromMethodDetails ? {
                         onChange={setDate}
                         min={minDate}
                         themeColor="#3b82f6"
+                        displayMode="modal"
                     />
                 </div>
                 {error && <p className="text-red-500 text-sm text-center my-2">{error}</p>}

@@ -148,6 +148,7 @@ const LoanRepaymentModal: React.FC<LoanRepaymentModalProps> = ({
                 value={date}
                 onChange={setDate}
                 themeColor="#3b82f6"
+                displayMode="modal"
             />
           </div>
           
