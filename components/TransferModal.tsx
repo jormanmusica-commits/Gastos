@@ -13,7 +13,7 @@ interface TransferModalProps {
   balancesByMethod: Record<string, number>;
   bankAccounts: BankAccount[];
   transactions: Transaction[];
-  onAddTransfer: (fromMethodId: string, toMethodId: string, amount: number, date: string) => string | void;
+  onAddTransfer: (fromMethodId: string, toMethodId: string, amount: number, date: string) => void;
   initialFromId: string | null;
   currency: string;
 }
@@ -109,10 +109,7 @@ const TransferModal: React.FC<TransferModalProps> = ({
       return;
     }
 
-    const errorMsg = onAddTransfer(fromMethod, toMethod, numericAmount, date);
-    if (errorMsg) {
-        setError(errorMsg);
-    }
+    onAddTransfer(fromMethod, toMethod, numericAmount, date);
   };
 
   const selectedFromMethodDetails = useMemo(() => {

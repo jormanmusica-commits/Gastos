@@ -2,13 +2,19 @@ import { Transaction, BankAccount } from '../types';
 
 const CASH_METHOD_ID = 'efectivo';
 
+export type ValidationError = {
+  type: 'NEGATIVE_BALANCE';
+  accountName: string;
+  date: string;
+} | null;
+
 /**
  * Validates a proposed set of transactions against business rules.
  * @param updatedTransactions The complete list of transactions after the proposed change.
  * @param bankAccounts The list of bank accounts.
  * @returns An error message string if validation fails, otherwise null.
  */
-export const validateTransactionChange = (updatedTransactions: Transaction[], bankAccounts: BankAccount[]): string | null => {
+export const validateTransactionChange = (updatedTransactions: Transaction[], bankAccounts: BankAccount[]): ValidationError => {
   if (updatedTransactions.length === 0) {
     return null;
   }
@@ -43,11 +49,16 @@ export const validateTransactionChange = (updatedTransactions: Transaction[], ba
     
     // Use a small epsilon for floating point comparisons
     if (newBalanceForMethod < -0.001) {
-        const methodDate = new Date(t.date).toLocaleDateString('es-ES');
+        const methodDate = new Date(t.date).toLocaleDateString('es-ES', { timeZone: 'UTC' });
         const methodName = t.paymentMethodId === CASH_METHOD_ID 
             ? 'Efectivo' 
             : bankAccounts.find(b => b.id === t.paymentMethodId)?.name || 'una cuenta';
-        return `La operación resulta en un saldo negativo para ${methodName} el ${methodDate}. Operación bloqueada.`;
+        
+        return {
+          type: 'NEGATIVE_BALANCE',
+          accountName: methodName,
+          date: methodDate,
+        };
     }
     
     currentBalances[t.paymentMethodId] = newBalanceForMethod;

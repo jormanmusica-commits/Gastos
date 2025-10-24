@@ -11,7 +11,7 @@ import Loans from './pages/Loans';
 import Deudas from './pages/Deudas';
 import Ahorros from './pages/Ahorros';
 import TransferModal from './components/TransferModal';
-import { validateTransactionChange, findFirstIncomeDate } from './utils/transactionUtils';
+import { validateTransactionChange, findFirstIncomeDate, ValidationError } from './utils/transactionUtils';
 import ProfileCreationModal from './components/ProfileCreationModal';
 import { exportProfileToCsv } from './utils/exportUtils';
 import FixedExpenseModal from './components/FixedExpenseModal';
@@ -35,6 +35,7 @@ import GiftFixedExpenseModal from './components/GiftFixedExpenseModal';
 import SwitchIcon from './components/icons/SwitchIcon';
 import QuickExpenseModal from './components/QuickExpenseModal';
 import ConfirmationToast from './components/ConfirmationToast';
+import ErrorModal from './components/ErrorModal';
 
 
 const CASH_METHOD_ID = 'efectivo';
@@ -243,6 +244,7 @@ const App: React.FC = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [toast, setToast] = useState<{ show: boolean, message: string }>({ show: false, message: '' });
   const toastTimerRef = useRef<number | null>(null);
+  const [errorModalContent, setErrorModalContent] = useState<{ title: string; message: string; solution?: string; } | null>(null);
 
   const showToast = useCallback((message: string) => {
     if (toastTimerRef.current) {
@@ -253,6 +255,24 @@ const App: React.FC = () => {
         setToast({ show: false, message: '' });
         toastTimerRef.current = null;
     }, 1000);
+  }, []);
+
+  const showValidationError = useCallback((error: ValidationError) => {
+    if (!error) return;
+
+    let content: { title: string; message: string; solution?: string; } | null = null;
+
+    if (error.type === 'NEGATIVE_BALANCE') {
+        content = {
+            title: 'Operación Bloqueada',
+            message: `La transacción que intentas registrar resultaría en un saldo negativo para "${error.accountName}" en la fecha ${error.date}.`,
+            solution: `Cambia la fecha de la transacción a un día en el que tuvieras fondos suficientes.\nAjusta el monto de la transacción.\nRegistra un ingreso previo para asegurar que tengas saldo positivo en esa fecha.`
+        };
+    }
+
+    if (content) {
+        setErrorModalContent(content);
+    }
   }, []);
 
   useEffect(() => {
@@ -586,7 +606,11 @@ const App: React.FC = () => {
         expenseDate.setUTCHours(0, 0, 0, 0);
 
         if (firstIncomeDate && expenseDate < firstIncomeDate) {
-            alert('Error: No puedes registrar un gasto en una fecha anterior a tu primer ingreso.');
+            setErrorModalContent({
+                title: 'Fecha de Gasto Inválida',
+                message: 'No puedes registrar un gasto en una fecha anterior a tu primer ingreso.',
+                solution: 'Por favor, selecciona una fecha igual o posterior al primer ingreso registrado en la aplicación.'
+            });
             return;
         }
     }
@@ -595,16 +619,16 @@ const App: React.FC = () => {
     const validationError = validateTransactionChange(updatedTransactions, activeProfile.data.bankAccounts);
 
     if (validationError) {
-        alert(validationError);
+        showValidationError(validationError);
         return;
     }
     
     updateActiveProfileData(data => ({ ...data, transactions: updatedTransactions }));
     showToast("Transacción realizada");
-  }, [activeProfile, updateActiveProfileData, categories, showToast]);
+  }, [activeProfile, updateActiveProfileData, categories, showToast, showValidationError]);
   
-  const handleAddTransfer = useCallback((fromMethodId: string, toMethodId: string, amount: number, date: string): string | void => {
-    if (!activeProfile) return "No active profile found.";
+  const handleAddTransfer = useCallback((fromMethodId: string, toMethodId: string, amount: number, date: string): void => {
+    if (!activeProfile) return;
     
     const transferId = crypto.randomUUID();
 
@@ -619,7 +643,8 @@ const App: React.FC = () => {
     const validationError = validateTransactionChange(updatedTransactions, activeProfile.data.bankAccounts);
 
     if (validationError) {
-      return validationError;
+      showValidationError(validationError);
+      return;
     }
 
     updateActiveProfileData(data => ({ ...data, transactions: updatedTransactions }));
@@ -627,7 +652,7 @@ const App: React.FC = () => {
     setIsTransferModalOpen(false);
     setInitialTransferFromId(null);
     setCurrentPage('resumen');
-}, [activeProfile, updateActiveProfileData, showToast]);
+}, [activeProfile, updateActiveProfileData, showToast, showValidationError]);
 
   const handleDeleteTransaction = useCallback((id: string) => {
     if (!activeProfile) return;
@@ -694,7 +719,7 @@ const App: React.FC = () => {
     // Validate the transaction change first
     const validationError = validateTransactionChange(updatedTransactions, activeProfile.data.bankAccounts);
     if (validationError) {
-        alert(validationError + "\nNo se puede eliminar esta transacción.");
+        showValidationError(validationError);
         return;
     }
     
@@ -706,7 +731,7 @@ const App: React.FC = () => {
         loans: updatedLoans,
         liabilities: updatedLiabilities,
     }));
-  }, [activeProfile, updateActiveProfileData]);
+  }, [activeProfile, updateActiveProfileData, showValidationError]);
 
   const handleAddCategory = useCallback((name: string, icon: string) => {
     if (categories.some(c => c.name.trim().toLowerCase() === name.trim().toLowerCase())) {
@@ -842,7 +867,11 @@ const App: React.FC = () => {
 
     const sourceBalance = balancesByMethod[sourceMethodId] || 0;
     if (value > sourceBalance) {
-        alert("Fondos insuficientes en la cuenta de origen.");
+        setErrorModalContent({
+            title: 'Fondos Insuficientes',
+            message: `No tienes suficientes fondos en la cuenta de origen para realizar este ahorro.`,
+            solution: 'Selecciona una cuenta con saldo suficiente o reduce el monto del ahorro.'
+        });
         return;
     }
 
@@ -864,7 +893,7 @@ const App: React.FC = () => {
     const validationError = validateTransactionChange(updatedTransactions, activeProfile.data.bankAccounts);
 
     if (validationError) {
-        alert(validationError);
+        showValidationError(validationError);
         return;
     }
 
@@ -875,7 +904,7 @@ const App: React.FC = () => {
     }));
     showToast("Transacción realizada");
     setIsAssetLiabilityModalOpen(false);
-  }, [activeProfile, balancesByMethod, updateActiveProfileData, categories, showToast]);
+  }, [activeProfile, balancesByMethod, updateActiveProfileData, categories, showToast, showValidationError]);
 
   const handleSpendFromSavings = useCallback((amountToSpend: number, description: string, date: string, categoryId: string | undefined, sourceMethodId: string) => {
     if (!activeProfile) return;
@@ -884,7 +913,11 @@ const App: React.FC = () => {
     const totalSavingsFromSource = assetsFromSource.reduce((sum, asset) => sum + asset.value, 0);
 
     if (amountToSpend > totalSavingsFromSource) {
-        alert("No puedes gastar más de lo que tienes ahorrado de esta fuente.");
+        setErrorModalContent({
+            title: 'Fondos Insuficientes',
+            message: 'No puedes gastar más de lo que tienes ahorrado de esta fuente.',
+            solution: 'Reduce el monto del gasto o utiliza ahorros de otra fuente si es posible.'
+        });
         return;
     }
 
@@ -942,7 +975,7 @@ const App: React.FC = () => {
     const validationError = validateTransactionChange(updatedTransactions, activeProfile.data.bankAccounts);
 
     if (validationError) {
-        alert(validationError);
+        showValidationError(validationError);
         return;
     }
     
@@ -953,7 +986,7 @@ const App: React.FC = () => {
     }));
     showToast("Transacción realizada");
     setIsSpendSavingsModalOpen(false);
-  }, [activeProfile, updateActiveProfileData, categories, showToast]);
+  }, [activeProfile, updateActiveProfileData, categories, showToast, showValidationError]);
 
   const handleSaveLiability = useCallback((name: string, details: string, amount: number, destinationMethodId: string, date: string, isInitial: boolean) => {
     if (!activeProfile) return;
@@ -986,7 +1019,7 @@ const App: React.FC = () => {
 
         const validationError = validateTransactionChange(updatedTransactions, activeProfile.data.bankAccounts);
         if (validationError) {
-            alert(validationError);
+            showValidationError(validationError);
             return;
         }
     }
@@ -999,7 +1032,7 @@ const App: React.FC = () => {
     showToast("Transacción realizada");
     setIsAssetLiabilityModalOpen(false);
     setModalConfig(null);
-  }, [activeProfile, updateActiveProfileData, showToast]);
+  }, [activeProfile, updateActiveProfileData, showToast, showValidationError]);
 
   const handleSaveLoan = useCallback((name: string, amount: number, sourceMethodId: string, date: string, isInitial: boolean, details: string) => {
     if (!activeProfile) return;
@@ -1030,7 +1063,7 @@ const App: React.FC = () => {
         updatedTransactions = [newTransaction, ...updatedTransactions];
         const validationError = validateTransactionChange(updatedTransactions, activeProfile.data.bankAccounts);
         if (validationError) {
-            alert(validationError);
+            showValidationError(validationError);
             return;
         }
     }
@@ -1043,7 +1076,7 @@ const App: React.FC = () => {
     showToast("Transacción realizada");
     setIsAssetLiabilityModalOpen(false);
     setModalConfig(null);
-  }, [activeProfile, updateActiveProfileData, showToast]);
+  }, [activeProfile, updateActiveProfileData, showToast, showValidationError]);
 
     const handleAddProfile = useCallback((name: string, countryCode: string, currency: string) => {
     const newProfile: Profile = {
@@ -1305,14 +1338,14 @@ const App: React.FC = () => {
         const updatedTransactions = [...newTransactions, ...activeProfile.data.transactions];
         const validationError = validateTransactionChange(updatedTransactions, activeProfile.data.bankAccounts);
         if (validationError) {
-            alert(validationError);
+            showValidationError(validationError);
             return;
         }
 
         updateActiveProfileData(data => ({ ...data, liabilities: updatedLiabilities, transactions: updatedTransactions }));
         showToast("Transacción realizada");
         setPayingDebt(null);
-    }, [activeProfile, updateActiveProfileData, showToast]);
+    }, [activeProfile, updateActiveProfileData, showToast, showValidationError]);
 
     const handleReceiveLoanPayments = useCallback((payments: { loanId: string, amount: number }[], paymentMethodId: string, date: string) => {
         if (!activeProfile) return;
@@ -1340,14 +1373,14 @@ const App: React.FC = () => {
         const updatedTransactions = [...newTransactions, ...activeProfile.data.transactions];
         const validationError = validateTransactionChange(updatedTransactions, activeProfile.data.bankAccounts);
         if (validationError) {
-            alert(validationError);
+            showValidationError(validationError);
             return;
         }
 
         updateActiveProfileData(data => ({ ...data, loans: updatedLoans, transactions: updatedTransactions }));
         showToast("Transacción realizada");
         setRepayingLoan(null);
-    }, [activeProfile, updateActiveProfileData, showToast]);
+    }, [activeProfile, updateActiveProfileData, showToast, showValidationError]);
 
     const handleAddValueToLoan = useCallback((loanId: string, amount: number, sourceMethodId: string, date: string, isInitial: boolean, details: string) => {
         if (!activeProfile) return;
@@ -1380,7 +1413,7 @@ const App: React.FC = () => {
             updatedTransactions = [newTransaction, ...updatedTransactions];
             const validationError = validateTransactionChange(updatedTransactions, activeProfile.data.bankAccounts);
             if (validationError) {
-                alert(validationError);
+                showValidationError(validationError);
                 return;
             }
             updatedLoans = updatedLoans.map(l => l.id === loanId ? { ...l, amount: l.amount + amount, originalAmount: l.originalAmount + amount } : l);
@@ -1389,7 +1422,7 @@ const App: React.FC = () => {
         updateActiveProfileData(data => ({ ...data, loans: updatedLoans, transactions: updatedTransactions }));
         showToast("Transacción realizada");
         setAddingValueToLoan(null);
-    }, [activeProfile, updateActiveProfileData, showToast]);
+    }, [activeProfile, updateActiveProfileData, showToast, showValidationError]);
 
     const handleUpdateLoan = useCallback((loanId: string, name: string, details: string, newOriginalAmountStr: string) => {
         updateActiveProfileData(data => {
@@ -1494,7 +1527,7 @@ const App: React.FC = () => {
             updatedTransactions = [newTransaction, ...updatedTransactions];
             const validationError = validateTransactionChange(updatedTransactions, activeProfile.data.bankAccounts);
             if (validationError) {
-                alert(validationError);
+                showValidationError(validationError);
                 return;
             }
             updatedLiabilities = updatedLiabilities.map(l => l.id === debtId ? { ...l, amount: l.amount + amount, originalAmount: l.originalAmount + amount } : l);
@@ -1503,7 +1536,7 @@ const App: React.FC = () => {
         updateActiveProfileData(data => ({ ...data, liabilities: updatedLiabilities, transactions: updatedTransactions }));
         showToast("Transacción realizada");
         setAddingValueToDebt(null);
-    }, [activeProfile, updateActiveProfileData, showToast]);
+    }, [activeProfile, updateActiveProfileData, showToast, showValidationError]);
     
     const handleUpdateDebt = useCallback((debtId: string, name: string, details: string, newOriginalAmountStr: string) => {
         updateActiveProfileData(data => {
@@ -1641,7 +1674,7 @@ const App: React.FC = () => {
 
         const validationError = validateTransactionChange(updatedTransactions, activeProfile.data.bankAccounts);
         if (validationError) {
-            alert(validationError + "\nNo se puede eliminar esta deuda.");
+            showValidationError(validationError);
             return;
         }
 
@@ -1652,7 +1685,7 @@ const App: React.FC = () => {
             transactions: updatedTransactions,
             liabilities: updatedLiabilities,
         }));
-      }, [activeProfile, updateActiveProfileData]);
+      }, [activeProfile, updateActiveProfileData, showValidationError]);
 
       const handleDeleteLoan = useCallback((id: string) => {
         if (!activeProfile) return;
@@ -1677,7 +1710,7 @@ const App: React.FC = () => {
 
         const validationError = validateTransactionChange(updatedTransactions, activeProfile.data.bankAccounts);
         if (validationError) {
-            alert(validationError + "\nNo se puede eliminar este préstamo.");
+            showValidationError(validationError);
             return;
         }
 
@@ -1688,7 +1721,7 @@ const App: React.FC = () => {
             transactions: updatedTransactions,
             loans: updatedLoans,
         }));
-      }, [activeProfile, updateActiveProfileData]);
+      }, [activeProfile, updateActiveProfileData, showValidationError]);
 
       const handleDeleteAsset = useCallback((id: string) => {
         if (!activeProfile) return;
@@ -1711,7 +1744,7 @@ const App: React.FC = () => {
 
         const validationError = validateTransactionChange(updatedTransactions, activeProfile.data.bankAccounts);
         if (validationError) {
-            alert(validationError + "\nNo se puede eliminar este ahorro.");
+            showValidationError(validationError);
             return;
         }
 
@@ -1723,7 +1756,7 @@ const App: React.FC = () => {
             assets: updatedAssets,
         }));
 
-      }, [activeProfile, updateActiveProfileData]);
+      }, [activeProfile, updateActiveProfileData, showValidationError]);
 
 
     if (profiles.length === 0) {
@@ -1754,7 +1787,7 @@ const App: React.FC = () => {
         );
     }
 
-    const isAnyModalOpen = isTransferModalOpen || isProfileCreationModalOpen || isFixedExpenseModalOpen || isQuickExpenseModalOpen || isAssetLiabilityModalOpen || isSpendSavingsModalOpen || !!payingDebt || !!repayingLoan || !!addingValueToLoan || !!editingLoan || !!viewingLoan || !!editingLoanAddition || !!addingValueToDebt || !!editingDebt || !!viewingDebt || !!editingDebtAddition || !!giftingFixedExpense;
+    const isAnyModalOpen = isTransferModalOpen || isProfileCreationModalOpen || isFixedExpenseModalOpen || isQuickExpenseModalOpen || isAssetLiabilityModalOpen || isSpendSavingsModalOpen || !!payingDebt || !!repayingLoan || !!addingValueToLoan || !!editingLoan || !!viewingLoan || !!editingLoanAddition || !!addingValueToDebt || !!editingDebt || !!viewingDebt || !!editingDebtAddition || !!giftingFixedExpense || !!errorModalContent;
 
   return (
     <div
@@ -2051,6 +2084,15 @@ const App: React.FC = () => {
             />
         )}
         <ConfirmationToast show={toast.show} message={toast.message} />
+        {errorModalContent && (
+            <ErrorModal
+                isOpen={!!errorModalContent}
+                onClose={() => setErrorModalContent(null)}
+                title={errorModalContent.title}
+                message={errorModalContent.message}
+                solution={errorModalContent.solution}
+            />
+        )}
     </div>
   );
 };
