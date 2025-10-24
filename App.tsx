@@ -858,6 +858,12 @@ const App: React.FC = () => {
       const amount = t.type === 'income' ? t.amount : -t.amount;
       balances[t.paymentMethodId] = (balances[t.paymentMethodId] || 0) + amount;
     }
+
+    // Correct for floating point inaccuracies
+    for (const key in balances) {
+      balances[key] = parseFloat(balances[key].toFixed(2));
+    }
+
     const totalBalance = Object.values(balances).reduce((sum, b) => sum + b, 0);
     return { balance: totalBalance, balancesByMethod: balances };
   }, [activeProfile]);
