@@ -36,6 +36,7 @@ import SwitchIcon from './components/icons/SwitchIcon';
 import QuickExpenseModal from './components/QuickExpenseModal';
 import ConfirmationToast from './components/ConfirmationToast';
 import ErrorModal from './components/ErrorModal';
+import EditTransactionModal from './components/EditTransactionModal';
 
 
 const CASH_METHOD_ID = 'efectivo';
@@ -394,6 +395,7 @@ const App: React.FC = () => {
   const [editingLoanAddition, setEditingLoanAddition] = useState<{ loan: Loan, addition: LoanAddition } | null>(null);
   const [modalConfig, setModalConfig] = useState<{ type: 'asset' | 'liability' | 'loan' } | null>(null);
   const [giftingFixedExpense, setGiftingFixedExpense] = useState<FixedExpense | null>(null);
+  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
 
   // New state for debt modals
   const [addingValueToDebt, setAddingValueToDebt] = useState<Liability | null>(null);
@@ -653,6 +655,67 @@ const App: React.FC = () => {
     setInitialTransferFromId(null);
     setCurrentPage('resumen');
 }, [activeProfile, updateActiveProfileData, showToast, showValidationError]);
+
+    const handleUpdateTransaction = useCallback((updatedTx: Transaction) => {
+    if (!activeProfile) return;
+
+    const originalTx = activeProfile.data.transactions.find(t => t.id === updatedTx.id);
+    if (!originalTx) return;
+
+    let updatedTransactions = [...activeProfile.data.transactions];
+    let updatedAssets = [...(activeProfile.data.assets || [])];
+    let updatedLiabilities = [...(activeProfile.data.liabilities || [])];
+    let updatedLoans = [...(activeProfile.data.loans || [])];
+
+    const originalTxIndex = updatedTransactions.findIndex(t => t.id === updatedTx.id);
+
+    // If it's a transfer, update both parts with amount and date.
+    if (originalTx.transferId) {
+        const otherTx = updatedTransactions.find(t => t.transferId === originalTx.transferId && t.id !== originalTx.id);
+        if (otherTx) {
+            const otherTxIndex = updatedTransactions.findIndex(t => t.id === otherTx.id);
+            const updatedOtherTx = { ...otherTx, amount: updatedTx.amount, date: updatedTx.date };
+            updatedTransactions[otherTxIndex] = updatedOtherTx;
+        }
+    }
+    // Handle patrimony-related transactions that are NOT creations
+    else {
+        const amountDifference = updatedTx.amount - originalTx.amount;
+        if (originalTx.liabilityId) { // debt payment
+            updatedLiabilities = updatedLiabilities.map(l => l.id === originalTx.liabilityId ? { ...l, amount: l.amount - amountDifference } : l);
+        }
+        if (originalTx.loanId) { // loan repayment
+            updatedLoans = updatedLoans.map(l => l.id === originalTx.loanId ? { ...l, amount: l.amount - amountDifference } : l);
+        }
+        if (originalTx.patrimonioType === 'loan-addition') {
+            updatedLoans = updatedLoans.map(l => l.id === originalTx.patrimonioId ? { ...l, amount: l.amount + amountDifference, originalAmount: l.originalAmount + amountDifference } : l);
+        }
+        if (originalTx.patrimonioType === 'debt-addition') {
+            updatedLiabilities = updatedLiabilities.map(l => l.id === originalTx.patrimonioId ? { ...l, amount: l.amount + amountDifference, originalAmount: l.originalAmount + amountDifference } : l);
+        }
+    }
+
+    // Replace the original transaction with the updated one
+    updatedTransactions[originalTxIndex] = updatedTx;
+
+    const validationError = validateTransactionChange(updatedTransactions, activeProfile.data.bankAccounts);
+    if (validationError) {
+        showValidationError(validationError);
+        return; // Don't apply changes, modal stays open
+    }
+
+    // If validation passes, commit all state changes
+    updateActiveProfileData(data => ({
+        ...data,
+        transactions: updatedTransactions,
+        assets: updatedAssets,
+        liabilities: updatedLiabilities,
+        loans: updatedLoans,
+    }));
+
+    setEditingTransaction(null); // Close modal
+    showToast("Transacción actualizada");
+  }, [activeProfile, updateActiveProfileData, showValidationError, showToast]);
 
   const handleDeleteTransaction = useCallback((id: string) => {
     if (!activeProfile) return;
@@ -1793,7 +1856,7 @@ const App: React.FC = () => {
         );
     }
 
-    const isAnyModalOpen = isTransferModalOpen || isProfileCreationModalOpen || isFixedExpenseModalOpen || isQuickExpenseModalOpen || isAssetLiabilityModalOpen || isSpendSavingsModalOpen || !!payingDebt || !!repayingLoan || !!addingValueToLoan || !!editingLoan || !!viewingLoan || !!editingLoanAddition || !!addingValueToDebt || !!editingDebt || !!viewingDebt || !!editingDebtAddition || !!giftingFixedExpense || !!errorModalContent;
+    const isAnyModalOpen = isTransferModalOpen || isProfileCreationModalOpen || isFixedExpenseModalOpen || isQuickExpenseModalOpen || isAssetLiabilityModalOpen || isSpendSavingsModalOpen || !!payingDebt || !!repayingLoan || !!addingValueToLoan || !!editingLoan || !!viewingLoan || !!editingLoanAddition || !!addingValueToDebt || !!editingDebt || !!viewingDebt || !!editingDebtAddition || !!giftingFixedExpense || !!errorModalContent || !!editingTransaction;
 
   return (
     <div
@@ -1818,6 +1881,7 @@ const App: React.FC = () => {
                 totalIncome={totalIncome}
                 totalExpenses={totalExpenses}
                 categories={categories}
+                onEditTransaction={setEditingTransaction}
             /> }
             { currentPage === 'ajustes' && <Ajustes 
                 categories={categories}
@@ -2099,6 +2163,14 @@ const App: React.FC = () => {
                 solution={errorModalContent.solution}
             />
         )}
+        <EditTransactionModal
+            isOpen={!!editingTransaction}
+            onClose={() => setEditingTransaction(null)}
+            transaction={editingTransaction}
+            onUpdateTransaction={handleUpdateTransaction}
+            profile={activeProfile}
+            categories={categories}
+        />
     </div>
   );
 };

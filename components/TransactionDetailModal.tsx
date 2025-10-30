@@ -6,6 +6,7 @@ import ArrowUpIcon from './icons/ArrowUpIcon';
 import ArrowDownIcon from './icons/ArrowDownIcon';
 import ScaleIcon from './icons/ScaleIcon';
 import CategoryIcon from './CategoryIcon';
+import EditIcon from './icons/EditIcon';
 
 const CASH_METHOD_ID = 'efectivo';
 
@@ -16,6 +17,7 @@ interface TransactionDetailModalProps {
   categories: Category[];
   bankAccounts: BankAccount[];
   currency: string;
+  onEdit?: (transaction: Transaction) => void;
 }
 
 const DetailRow: React.FC<{ label: string; children: React.ReactNode; }> = ({ label, children }) => (
@@ -25,7 +27,7 @@ const DetailRow: React.FC<{ label: string; children: React.ReactNode; }> = ({ la
     </div>
 );
 
-const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({ isOpen, onClose, transaction, categories, bankAccounts, currency }) => {
+const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({ isOpen, onClose, transaction, categories, bankAccounts, currency, onEdit }) => {
     if (!isOpen || !transaction) return null;
 
     const category = transaction.categoryId ? categories.find(c => c.id === transaction.categoryId) : undefined;
@@ -79,9 +81,16 @@ const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({ isOpen,
                             <p className={`text-2xl font-bold ${colorClass}`}>{sign}{formattedAmount}</p>
                         </div>
                     </div>
-                    <button onClick={onClose} aria-label="Cerrar modal" className="p-2 -mt-2 -mr-2 rounded-full text-gray-800 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
-                        <CloseIcon className="w-6 h-6" />
-                    </button>
+                     <div className="flex items-center">
+                        {onEdit && (
+                            <button onClick={() => onEdit(transaction)} aria-label="Editar transacción" className="p-2 rounded-full text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-blue-500 dark:hover:text-blue-400 transition-colors">
+                                <EditIcon className="w-6 h-6" />
+                            </button>
+                        )}
+                        <button onClick={onClose} aria-label="Cerrar modal" className="p-2 rounded-full text-gray-800 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+                            <CloseIcon className="w-6 h-6" />
+                        </button>
+                    </div>
                 </header>
 
                 <div className="p-6 space-y-2">

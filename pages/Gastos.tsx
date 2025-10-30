@@ -136,10 +136,10 @@ const Gastos: React.FC<GastosProps> = ({
         setFixedExpenseToPay(expense);
     };
 
-     const handleConfirmFixedPayment = (expense: FixedExpense, date: string, paymentMethodId: string) => {
+     const handleConfirmFixedPayment = (expense: FixedExpense, date: string, paymentMethodId: string, amount: number) => {
         onAddTransaction(
             expense.name,
-            expense.amount,
+            amount,
             date,
             'expense',
             paymentMethodId,

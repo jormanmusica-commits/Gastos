@@ -25,6 +25,7 @@ interface ResumenProps {
   totalIncome: number;
   totalExpenses: number;
   categories: Category[];
+  onEditTransaction: (transaction: Transaction) => void;
 }
 
 const CASH_METHOD_ID = 'efectivo';
@@ -36,7 +37,8 @@ const Resumen: React.FC<ResumenProps> = ({
   monthlyIncomeByBank, monthlyIncomeByCash,
   monthlyExpensesByBank, monthlyExpensesByCash,
   totalIncome, totalExpenses,
-  categories
+  categories,
+  onEditTransaction
 }) => {
   const { data: { transactions, bankAccounts, liabilities = [], loans = [] }, currency } = profile;
   const [modalType, setModalType] = useState<'income' | 'expense' | null>(null);
@@ -66,6 +68,11 @@ const Resumen: React.FC<ResumenProps> = ({
         timeZone: 'UTC',
     };
     return new Intl.DateTimeFormat('es-ES', options).format(date).toLowerCase();
+  };
+  
+  const handleEdit = (transaction: Transaction) => {
+    onEditTransaction(transaction);
+    setDetailTransaction(null);
   };
 
   const filteredTransactions = useMemo(() => {
@@ -298,6 +305,7 @@ const Resumen: React.FC<ResumenProps> = ({
         categories={categories}
         bankAccounts={bankAccounts}
         currency={currency}
+        onEdit={handleEdit}
       />
     </div>
   );

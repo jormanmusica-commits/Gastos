@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { FixedExpense, BankAccount } from '../types';
 import CloseIcon from './icons/CloseIcon';
 import CustomDatePicker from './CustomDatePicker';
+import AmountInput from './AmountInput';
 
 const CASH_METHOD_ID = 'efectivo';
 
@@ -11,7 +12,7 @@ interface PayFixedExpenseModalProps {
   expense: FixedExpense | null;
   bankAccounts: BankAccount[];
   balancesByMethod: Record<string, number>;
-  onConfirm: (expense: FixedExpense, date: string, paymentMethodId: string) => void;
+  onConfirm: (expense: FixedExpense, date: string, paymentMethodId: string, amount: number) => void;
   currency: string;
   minDateForExpenses?: string;
 }
@@ -21,6 +22,7 @@ const PayFixedExpenseModal: React.FC<PayFixedExpenseModalProps> = ({
 }) => {
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [paymentMethodId, setPaymentMethodId] = useState<string>('');
+  const [paymentAmount, setPaymentAmount] = useState('');
   const [error, setError] = useState('');
 
   const formatCurrency = (amount: number) => {
@@ -42,12 +44,15 @@ const PayFixedExpenseModal: React.FC<PayFixedExpenseModalProps> = ({
     if (isOpen && expense) {
       const today = new Date().toISOString().split('T')[0];
       setDate(minDateForExpenses && today < minDateForExpenses ? minDateForExpenses : today);
+      setPaymentAmount(expense.amount.toString().replace('.', ','));
       setError('');
       // Pre-select the first source with sufficient balance
       const firstValidSource = paymentSources.find(p => p.balance >= expense.amount);
       setPaymentMethodId(firstValidSource ? firstValidSource.id : (paymentSources.length > 0 ? paymentSources[0].id : ''));
     }
   }, [isOpen, expense, minDateForExpenses, paymentSources]);
+  
+  const numericPaymentAmount = parseFloat(paymentAmount.replace(',', '.')) || 0;
 
   const handleSubmit = () => {
     if (!expense) return;
@@ -58,11 +63,11 @@ const PayFixedExpenseModal: React.FC<PayFixedExpenseModalProps> = ({
       return;
     }
     const source = paymentSources.find(s => s.id === paymentMethodId);
-    if (!source || source.balance < expense.amount) {
+    if (!source || source.balance < numericPaymentAmount) {
       setError('Fondos insuficientes en la cuenta de origen.');
       return;
     }
-    onConfirm(expense, date, paymentMethodId);
+    onConfirm(expense, date, paymentMethodId, numericPaymentAmount);
   };
 
   if (!isOpen || !expense) return null;
@@ -86,9 +91,15 @@ const PayFixedExpenseModal: React.FC<PayFixedExpenseModalProps> = ({
           <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50">
             <div className="flex items-center justify-between text-lg">
               <span className="font-medium text-gray-800 dark:text-gray-100">{expense.name}</span>
-              <span className="font-mono font-semibold text-red-500">{formatCurrency(expense.amount)}</span>
             </div>
           </div>
+          <AmountInput
+            value={paymentAmount}
+            onChange={setPaymentAmount}
+            label="Monto a pagar"
+            themeColor="#ef4444"
+            currency={currency}
+          />
           <div>
             <label htmlFor="payment-date" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Fecha de Gasto</label>
             <CustomDatePicker value={date} onChange={setDate} min={minDateForExpenses} themeColor="#ef4444" displayMode="modal"/>
@@ -104,9 +115,9 @@ const PayFixedExpenseModal: React.FC<PayFixedExpenseModalProps> = ({
             >
               <option value="" disabled>Seleccionar origen</option>
               {paymentSources.map(source => (
-                <option key={source.id} value={source.id} disabled={source.balance < expense.amount} style={{ color: 'initial', fontWeight: 'normal' }}>
+                <option key={source.id} value={source.id} disabled={source.balance < numericPaymentAmount} style={{ color: 'initial', fontWeight: 'normal' }}>
                   {source.name} ({formatCurrency(source.balance)})
-                  {source.balance < expense.amount ? ' - Fondos insuficientes' : ''}
+                  {source.balance < numericPaymentAmount ? ' - Fondos insuficientes' : ''}
                 </option>
               ))}
             </select>
@@ -117,7 +128,7 @@ const PayFixedExpenseModal: React.FC<PayFixedExpenseModalProps> = ({
         <footer className="p-4 border-t border-gray-200 dark:border-gray-700 mt-auto">
           <button
             onClick={handleSubmit}
-            disabled={!paymentMethodId || (paymentSources.find(s => s.id === paymentMethodId)?.balance || 0) < expense.amount}
+            disabled={!paymentMethodId || (paymentSources.find(s => s.id === paymentMethodId)?.balance || 0) < numericPaymentAmount}
             className="w-full bg-red-500 text-white font-bold py-3 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-gray-900 transition-colors hover:bg-red-600 disabled:bg-gray-400 disabled:cursor-not-allowed"
           >
             Confirmar Pago
