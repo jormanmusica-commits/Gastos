@@ -203,7 +203,7 @@ const CategoryModal: React.FC<CategoryModalProps> = ({
 
   return (
     <div 
-      className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 flex items-center justify-center animate-fade-in"
+      className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] flex items-center justify-center animate-fade-in"
       onClick={onClose}
       role="dialog"
       aria-modal="true"
