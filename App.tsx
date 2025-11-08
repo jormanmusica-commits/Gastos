@@ -307,6 +307,7 @@ const App: React.FC = () => {
                 ...p,
                 data: {
                     ...p.data,
+                    bankAccounts: p.data.bankAccounts || [],
                     quickExpenses: p.data.quickExpenses || [],
                     liabilities: (p.data.liabilities || []).map((l: Liability) => ({
                         ...l,
