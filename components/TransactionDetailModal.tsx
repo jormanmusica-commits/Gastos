@@ -21,9 +21,9 @@ interface TransactionDetailModalProps {
 }
 
 const DetailRow: React.FC<{ label: string; children: React.ReactNode; }> = ({ label, children }) => (
-    <div className="flex justify-between items-center py-3 border-b border-gray-200 dark:border-gray-700/50">
-        <span className="font-medium text-gray-500 dark:text-gray-400">{label}</span>
-        <span className="font-semibold text-right text-gray-800 dark:text-gray-100">{children}</span>
+    <div className="flex justify-between items-start py-3 border-b border-gray-200 dark:border-gray-700/50">
+        <span className="font-medium text-gray-500 dark:text-gray-400 flex-shrink-0 mr-4">{label}</span>
+        <div className="font-semibold text-right text-gray-800 dark:text-gray-100 whitespace-pre-wrap">{children}</div>
     </div>
 );
 
@@ -95,16 +95,17 @@ const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({ isOpen,
 
                 <div className="p-6 space-y-2">
                     <DetailRow label="Descripción">{transaction.description}</DetailRow>
+                    {transaction.details && <DetailRow label="Detalles">{transaction.details}</DetailRow>}
                     <DetailRow label="Fecha">{formattedDate}</DetailRow>
                     <DetailRow label="Método de Pago">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center justify-end gap-2">
                             <span className="w-3 h-3 rounded-full" style={{ backgroundColor: paymentMethod.color }}></span>
                             <span>{paymentMethod.name}</span>
                         </div>
                     </DetailRow>
                     {category && !transaction.transferId && (
                          <DetailRow label="Categoría">
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center justify-end gap-2">
                                 <CategoryIcon iconName={category.icon} className="text-xl" />
                                 <span>{category.name}</span>
                             </div>

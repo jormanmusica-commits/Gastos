@@ -12,7 +12,7 @@ interface IngresosProps {
   profile: Profile;
   balance: number;
   balancesByMethod: Record<string, number>;
-  onAddTransaction: (description: string, amount: number, date: string, type: 'income' | 'expense', paymentMethodId: string, categoryId?: string) => void;
+  onAddTransaction: (description: string, amount: number, date: string, type: 'income' | 'expense', paymentMethodId: string, categoryId?: string, details?: string) => void;
   onNavigate: (page: Page) => void;
   onAddBankAccount: (name: string, color: string) => void;
   onUpdateBankAccount: (id: string, name: string, color: string) => void;
@@ -65,9 +65,9 @@ const Ingresos: React.FC<IngresosProps> = ({
     setIsBankSelectionModalOpen(false);
   };
 
-  const handleFormSubmit = (description: string, amount: number, date: string) => {
+  const handleFormSubmit = (description: string, amount: number, date: string, categoryId?: string, details?: string) => {
     if (activeMethodId) {
-      onAddTransaction(description, amount, date, 'income', activeMethodId);
+      onAddTransaction(description, amount, date, 'income', activeMethodId, undefined, details);
       setIsFormVisible(false);
     }
   };

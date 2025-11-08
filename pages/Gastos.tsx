@@ -19,7 +19,7 @@ interface GastosProps {
   profile: Profile;
   balance: number;
   balancesByMethod: Record<string, number>;
-  onAddTransaction: (description: string, amount: number, date: string, type: 'income' | 'expense', paymentMethodId: string, categoryId?: string) => void;
+  onAddTransaction: (description: string, amount: number, date: string, type: 'income' | 'expense', paymentMethodId: string, categoryId?: string, details?: string) => void;
   onNavigate: (page: Page) => void;
   onAddCategory: (name: string, icon: string) => void;
   onUpdateCategory: (id: string, name: string, icon: string) => void;
@@ -111,9 +111,9 @@ const Gastos: React.FC<GastosProps> = ({
       handleSelectMethod(bankId);
     };
 
-    const handleFormSubmit = (description: string, amount: number, date: string, categoryId?: string, options?: { addAsFixed?: boolean; addAsQuick?: boolean; }) => {
+    const handleFormSubmit = (description: string, amount: number, date: string, categoryId?: string, details?: string, options?: { addAsFixed?: boolean; addAsQuick?: boolean; }) => {
         if (activeMethodId) {
-          onAddTransaction(description, amount, date, 'expense', activeMethodId, categoryId);
+          onAddTransaction(description, amount, date, 'expense', activeMethodId, categoryId, details);
           if (options?.addAsFixed) {
             onAddFixedExpense(description, amount, categoryId);
           }

@@ -582,7 +582,7 @@ const App: React.FC = () => {
     ));
   }, [activeProfileId]);
   
-  const handleAddTransaction = useCallback((description: string, amount: number, date: string, type: 'income' | 'expense', paymentMethodId: string, categoryId?: string) => {
+  const handleAddTransaction = useCallback((description: string, amount: number, date: string, type: 'income' | 'expense', paymentMethodId: string, categoryId?: string, details?: string) => {
     if (!activeProfile) return;
 
     let finalCategoryId = categoryId;
@@ -601,6 +601,7 @@ const App: React.FC = () => {
       type,
       paymentMethodId,
       categoryId: finalCategoryId,
+      details,
     };
 
     if (type === 'expense') {

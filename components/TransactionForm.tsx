@@ -7,7 +7,7 @@ import CheckIcon from './icons/CheckIcon';
 
 interface TransactionFormProps {
   transactionType: 'income' | 'expense';
-  onAddTransaction: (description: string, amount: number, date: string, categoryId?: string, options?: { addAsFixed?: boolean, addAsQuick?: boolean }) => void;
+  onAddTransaction: (description: string, amount: number, date: string, categoryId?: string, details?: string, options?: { addAsFixed?: boolean, addAsQuick?: boolean }) => void;
   currency: string;
   categories?: Category[];
   selectedCategoryId?: string;
@@ -31,6 +31,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
     minDate, currency
 }) => {
   const [description, setDescription] = useState('');
+  const [details, setDetails] = useState('');
   const [amount, setAmount] = useState('');
   const [addAsFixed, setAddAsFixed] = useState(false);
   const [addAsQuick, setAddAsQuick] = useState(false);
@@ -86,7 +87,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
       return;
     }
     
-    onAddTransaction(description, numericAmount, date, currentCategoryId, { addAsFixed, addAsQuick });
+    onAddTransaction(description, numericAmount, date, currentCategoryId, details, { addAsFixed, addAsQuick });
   };
 
   const handleAmountConfirm = () => {
@@ -208,6 +209,21 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                             />
                         </div>
                         
+                        <div>
+                            <label htmlFor="details-input" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                Detalles (Opcional)
+                            </label>
+                            <textarea
+                                id="details-input"
+                                value={details}
+                                onChange={(e) => setDetails(e.target.value)}
+                                rows={2}
+                                placeholder="Añade una nota sobre esta transacción..."
+                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                                style={{'--tw-ring-color': config.themeColor} as React.CSSProperties}
+                            />
+                        </div>
+
                         <div>
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                 Fecha
