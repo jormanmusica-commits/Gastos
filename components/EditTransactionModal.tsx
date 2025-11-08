@@ -1,8 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Transaction, Profile, Category } from '../types';
 import CloseIcon from './icons/CloseIcon';
-import AmountInput from './AmountInput';
-import CustomDatePicker from './CustomDatePicker';
 import CategoryModal from './CategoryModal';
 import CategoryIcon from './CategoryIcon';
 
@@ -13,15 +11,23 @@ interface EditTransactionModalProps {
   onClose: () => void;
   transaction: Transaction | null;
   onUpdateTransaction: (transaction: Transaction) => void;
-  profile: Profile;
+  profile: Profile | undefined;
   categories: Category[];
 }
 
+const ReadOnlyField: React.FC<{ label: string; value: React.ReactNode; }> = ({ label, value }) => (
+    <div>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{label}</label>
+        <div className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-md bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400">
+            {value}
+        </div>
+    </div>
+);
+
+
 const EditTransactionModal: React.FC<EditTransactionModalProps> = ({ isOpen, onClose, transaction, onUpdateTransaction, profile, categories }) => {
   const [description, setDescription] = useState('');
-  const [amount, setAmount] = useState('');
-  const [date, setDate] = useState('');
-  const [paymentMethodId, setPaymentMethodId] = useState('');
+  const [details, setDetails] = useState<string | undefined>('');
   const [categoryId, setCategoryId] = useState<string | undefined>('');
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   
@@ -31,24 +37,24 @@ const EditTransactionModal: React.FC<EditTransactionModalProps> = ({ isOpen, onC
   useEffect(() => {
     if (isOpen && transaction) {
       setDescription(transaction.description);
-      setAmount(transaction.amount.toString());
-      setDate(transaction.date);
-      setPaymentMethodId(transaction.paymentMethodId);
+      setDetails(transaction.details);
       setCategoryId(transaction.categoryId);
     }
   }, [isOpen, transaction]);
 
-  if (!isOpen || !transaction) return null;
+  if (!isOpen || !transaction || !profile || !profile.data) {
+    return null;
+  }
   
   const { currency, data: { bankAccounts } } = profile;
 
   const handleSubmit = () => {
-    const numericAmount = parseFloat(amount.replace(',', '.'));
-    if (isNaN(numericAmount) || numericAmount <= 0) {
-      alert('Por favor, introduce una cantidad válida.');
+    if (isPatrimonioCreation) {
+      onClose(); // Just close, no editing.
       return;
     }
-    if (!description.trim()) {
+
+    if (!description.trim() && !isTransfer) {
       alert('La descripción no puede estar vacía.');
       return;
     }
@@ -56,9 +62,7 @@ const EditTransactionModal: React.FC<EditTransactionModalProps> = ({ isOpen, onC
     const updatedTransaction: Transaction = {
         ...transaction,
         description,
-        amount: numericAmount,
-        date,
-        paymentMethodId,
+        details,
         categoryId: transaction.type === 'expense' ? categoryId : undefined,
     };
     onUpdateTransaction(updatedTransaction);
@@ -75,6 +79,19 @@ const EditTransactionModal: React.FC<EditTransactionModalProps> = ({ isOpen, onC
   ];
   
   const selectedCategory = categories.find(c => c.id === categoryId);
+
+  const locale = currency === 'COP' ? 'es-CO' : (currency === 'CLP' ? 'es-CL' : 'es-ES');
+  const formattedAmount = new Intl.NumberFormat(locale, {
+      style: 'currency',
+      currency: currency,
+  }).format(transaction.amount);
+
+  const formattedDate = new Intl.DateTimeFormat('es-ES', {
+      dateStyle: 'full',
+      timeZone: 'UTC',
+  }).format(new Date(transaction.date + 'T00:00:00Z'));
+  
+  const paymentMethodName = paymentMethods.find(pm => pm.id === transaction.paymentMethodId)?.name || 'Desconocido';
 
   return (
     <>
@@ -112,28 +129,24 @@ const EditTransactionModal: React.FC<EditTransactionModalProps> = ({ isOpen, onC
                             value={description}
                             onChange={(e) => setDescription(e.target.value)}
                             disabled={isTransfer}
-                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 disabled:opacity-70"
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 disabled:opacity-70 disabled:bg-gray-200 dark:disabled:bg-gray-700/50"
                         />
                     </div>
-
-                    <AmountInput
-                        value={amount}
-                        onChange={setAmount}
-                        label="Monto"
-                        themeColor={transaction.type === 'income' ? '#22c55e' : '#ef4444'}
-                        currency={currency}
-                    />
-
+                    
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Fecha</label>
-                        <CustomDatePicker
-                            value={date}
-                            onChange={setDate}
-                            themeColor={transaction.type === 'income' ? '#22c55e' : '#ef4444'}
-                            displayMode="modal"
+                        <label htmlFor="edit-details" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Detalles (Opcional)</label>
+                        <textarea
+                            id="edit-details"
+                            value={details || ''}
+                            onChange={(e) => setDetails(e.target.value)}
+                            rows={3}
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                         />
                     </div>
 
+                    <ReadOnlyField label="Monto" value={formattedAmount} />
+                    <ReadOnlyField label="Fecha" value={formattedDate} />
+                    
                     {transaction.type !== 'income' && !isTransfer && (
                         <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Categoría</label>
@@ -157,19 +170,7 @@ const EditTransactionModal: React.FC<EditTransactionModalProps> = ({ isOpen, onC
                     )}
 
                     {!isTransfer && (
-                        <div>
-                        <label htmlFor="edit-payment-method" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Método de Pago</label>
-                        <select
-                            id="edit-payment-method"
-                            value={paymentMethodId}
-                            onChange={(e) => setPaymentMethodId(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                        >
-                            {paymentMethods.map(method => (
-                            <option key={method.id} value={method.id}>{method.name}</option>
-                            ))}
-                        </select>
-                        </div>
+                       <ReadOnlyField label="Método de Pago" value={paymentMethodName} />
                     )}
                 </>
             )}
