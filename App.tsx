@@ -1728,34 +1728,69 @@ const App: React.FC = () => {
         const liabilityToDelete = activeProfile.data.liabilities.find(l => l.id === id);
         if (!liabilityToDelete) return;
 
-        if (!window.confirm(`¿Estás seguro de que quieres eliminar la deuda "${liabilityToDelete.name}"? Se eliminarán también todas las transacciones asociadas (pagos, ampliaciones, y la transacción de origen si existe). Esta acción es irreversible.`)) {
-            return;
+        const isPaid = liabilityToDelete.amount <= 0.01;
+
+        if (isPaid) {
+            if (!window.confirm(`¿Quieres eliminar el registro de la deuda pagada "${liabilityToDelete.name}" del historial?\n\nEsta acción SOLO eliminará la tarjeta de la deuda. Todas las transacciones (ingreso inicial y pagos) se mantendrán en tu historial general para NO afectar tu saldo actual.`)) {
+                return;
+            }
+
+            // Unlink transactions instead of deleting them
+            const updatedTransactions = activeProfile.data.transactions.map(t => {
+                const isRelated = t.liabilityId === id || 
+                                  ((t.patrimonioType === 'liability' || t.patrimonioType === 'debt-addition') && t.patrimonioId === id);
+                
+                if (isRelated) {
+                    return {
+                        ...t,
+                        liabilityId: undefined,
+                        patrimonioId: undefined,
+                        patrimonioType: undefined,
+                        details: t.details ? `${t.details} (Deuda Archivada: ${liabilityToDelete.name})` : `(Deuda Archivada: ${liabilityToDelete.name})`
+                    };
+                }
+                return t;
+            });
+
+            const updatedLiabilities = activeProfile.data.liabilities.filter(l => l.id !== id);
+
+            updateActiveProfileData(data => ({
+                ...data,
+                transactions: updatedTransactions,
+                liabilities: updatedLiabilities,
+            }));
+
+        } else {
+            // Logic for ACTIVE debts (Revert balance)
+            if (!window.confirm(`¿Estás seguro de que quieres eliminar la deuda ACTIVA "${liabilityToDelete.name}"? \n\nAl estar activa, se eliminarán también todas las transacciones asociadas (pagos, ampliaciones, y la transacción de origen) y el saldo de tus cuentas se revertirá. Esta acción es irreversible.`)) {
+                return;
+            }
+
+            let updatedTransactions = [...activeProfile.data.transactions];
+
+            const transactionsToRemove = updatedTransactions.filter(t =>
+                (t.patrimonioType === 'liability' && t.patrimonioId === id) ||
+                (t.patrimonioType === 'debt-addition' && t.patrimonioId === id) ||
+                t.liabilityId === id
+            );
+            const transactionIdsToRemove = transactionsToRemove.map(t => t.id);
+
+            updatedTransactions = updatedTransactions.filter(t => !transactionIdsToRemove.includes(t.id));
+
+            const validationError = validateTransactionChange(updatedTransactions, activeProfile.data.bankAccounts);
+            if (validationError) {
+                showValidationError(validationError);
+                return;
+            }
+
+            const updatedLiabilities = activeProfile.data.liabilities.filter(l => l.id !== id);
+
+            updateActiveProfileData(data => ({
+                ...data,
+                transactions: updatedTransactions,
+                liabilities: updatedLiabilities,
+            }));
         }
-
-        let updatedTransactions = [...activeProfile.data.transactions];
-
-        const transactionsToRemove = updatedTransactions.filter(t =>
-            (t.patrimonioType === 'liability' && t.patrimonioId === id) ||
-            (t.patrimonioType === 'debt-addition' && t.patrimonioId === id) ||
-            t.liabilityId === id
-        );
-        const transactionIdsToRemove = transactionsToRemove.map(t => t.id);
-
-        updatedTransactions = updatedTransactions.filter(t => !transactionIdsToRemove.includes(t.id));
-
-        const validationError = validateTransactionChange(updatedTransactions, activeProfile.data.bankAccounts);
-        if (validationError) {
-            showValidationError(validationError);
-            return;
-        }
-
-        const updatedLiabilities = activeProfile.data.liabilities.filter(l => l.id !== id);
-
-        updateActiveProfileData(data => ({
-            ...data,
-            transactions: updatedTransactions,
-            liabilities: updatedLiabilities,
-        }));
       }, [activeProfile, updateActiveProfileData, showValidationError]);
 
       const handleDeleteLoan = useCallback((id: string) => {
