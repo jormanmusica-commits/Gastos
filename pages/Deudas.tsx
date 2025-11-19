@@ -1,7 +1,9 @@
-import React from 'react';
+
+import React, { useState } from 'react';
 import { Page, Liability, Profile } from '../types';
 import ArrowLeftIcon from '../components/icons/ArrowLeftIcon';
 import TrashIcon from '../components/icons/TrashIcon';
+import CheckIcon from '../components/icons/CheckIcon';
 
 interface DeudasProps {
   profile: Profile;
@@ -16,6 +18,10 @@ interface DeudasProps {
 }
 
 const Deudas: React.FC<DeudasProps> = ({ profile, liabilities, onOpenDebtPaymentModal, onOpenAddValueToDebtModal, onOpenEditDebtModal, onOpenDebtDetailModal, onNavigate, currency, onDeleteDebt }) => {
+    const [showHistory, setShowHistory] = useState(false);
+
+    const activeLiabilities = liabilities.filter(l => l.amount > 0.01);
+    const paidLiabilities = liabilities.filter(l => l.amount <= 0.01);
     
     const formatCurrency = (amount: number) => {
         const locale = currency === 'COP' ? 'es-CO' : (currency === 'CLP' ? 'es-CL' : 'es-ES');
@@ -30,6 +36,7 @@ const Deudas: React.FC<DeudasProps> = ({ profile, liabilities, onOpenDebtPayment
     const DebtCard: React.FC<{ liability: Liability, onRegisterPayment: () => void, onAddValue: () => void, onEdit: () => void, onOpenDetails: () => void, onDelete: () => void }> = ({ liability, onRegisterPayment, onAddValue, onEdit, onOpenDetails, onDelete }) => {
         const paidAmount = liability.originalAmount - liability.amount;
         const progress = liability.originalAmount > 0 ? (paidAmount / liability.originalAmount) * 100 : 0;
+        const isPaid = liability.amount <= 0.01;
         
         const formatFullDate = (dateString: string) => {
             const date = new Date(dateString + 'T00:00:00Z');
@@ -61,13 +68,15 @@ const Deudas: React.FC<DeudasProps> = ({ profile, liabilities, onOpenDebtPayment
                 onClick={onOpenDetails}
                 role="button"
                 aria-label={`Ver detalles de la deuda ${liability.name}`}
-                className="bg-white dark:bg-gray-800/50 p-4 rounded-xl shadow-md space-y-3 transition-all duration-300 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer"
+                className={`p-4 rounded-xl shadow-md space-y-3 transition-all duration-300 cursor-pointer border ${isPaid ? 'bg-gray-50 dark:bg-gray-800/30 border-gray-200 dark:border-gray-700' : 'bg-white dark:bg-gray-800/50 border-transparent hover:bg-gray-50 dark:hover:bg-gray-800'}`}
             >
                 <div className="flex justify-between items-start">
                     <div 
                         className="flex-grow flex items-baseline gap-2 min-w-0"
                     >
-                        <h3 className="font-bold text-lg text-gray-800 dark:text-gray-100 truncate">{liability.name}</h3>
+                        <h3 className={`font-bold text-lg truncate ${isPaid ? 'text-gray-500 dark:text-gray-400 decoration-slate-400' : 'text-gray-800 dark:text-gray-100'}`}>
+                            {liability.name}
+                        </h3>
                         <span className="text-xs text-gray-400 dark:text-gray-500 flex-shrink-0">{formattedDate}</span>
                     </div>
                     <button
@@ -80,7 +89,10 @@ const Deudas: React.FC<DeudasProps> = ({ profile, liabilities, onOpenDebtPayment
                 </div>
                 
                 <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
-                    <div className="bg-red-500 h-2.5 rounded-full" style={{ width: `${progress}%` }}></div>
+                    <div 
+                        className={`h-2.5 rounded-full ${isPaid ? 'bg-green-500' : 'bg-red-500'}`} 
+                        style={{ width: `${progress}%` }}
+                    ></div>
                 </div>
 
                 <div className="space-y-1 text-sm">
@@ -94,7 +106,7 @@ const Deudas: React.FC<DeudasProps> = ({ profile, liabilities, onOpenDebtPayment
                     </div>
                     <div className="flex justify-between">
                         <span className="text-gray-500 dark:text-gray-400">Restante:</span>
-                        <span className="font-bold text-red-500">{formatCurrency(liability.amount)}</span>
+                        <span className={`font-bold ${isPaid ? 'text-green-500' : 'text-red-500'}`}>{formatCurrency(liability.amount)}</span>
                     </div>
                 </div>
                 
@@ -105,18 +117,27 @@ const Deudas: React.FC<DeudasProps> = ({ profile, liabilities, onOpenDebtPayment
                     >
                         Editar
                     </button>
-                     <button
-                        onClick={(e) => { e.stopPropagation(); onAddValue(); }}
-                        className="text-sm font-semibold text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-500/20 hover:bg-red-200 dark:hover:bg-red-500/30 rounded-lg px-4 py-2 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-gray-800 focus:ring-red-500"
-                    >
-                        Añadir Valor
-                    </button>
-                    <button
-                        onClick={(e) => { e.stopPropagation(); onRegisterPayment(); }}
-                        className="text-sm font-semibold text-white bg-red-500 hover:bg-red-600 rounded-lg px-4 py-2 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-gray-800 focus:ring-red-500"
-                    >
-                        Pagar
-                    </button>
+                    {!isPaid && (
+                        <>
+                            <button
+                                onClick={(e) => { e.stopPropagation(); onAddValue(); }}
+                                className="text-sm font-semibold text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-500/20 hover:bg-red-200 dark:hover:bg-red-500/30 rounded-lg px-4 py-2 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-gray-800 focus:ring-red-500"
+                            >
+                                Añadir Valor
+                            </button>
+                            <button
+                                onClick={(e) => { e.stopPropagation(); onRegisterPayment(); }}
+                                className="text-sm font-semibold text-white bg-red-500 hover:bg-red-600 rounded-lg px-4 py-2 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-gray-800 focus:ring-red-500"
+                            >
+                                Pagar
+                            </button>
+                        </>
+                    )}
+                    {isPaid && (
+                        <span className="flex items-center gap-1 text-sm font-bold text-green-600 dark:text-green-400 px-3 py-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
+                           <CheckIcon className="w-4 h-4" /> ¡Pagada!
+                        </span>
+                    )}
                 </div>
             </div>
         );
@@ -138,8 +159,8 @@ const Deudas: React.FC<DeudasProps> = ({ profile, liabilities, onOpenDebtPayment
             </header>
 
             <div className="space-y-4">
-                {liabilities.length > 0 ? (
-                    liabilities.map(liability => <DebtCard 
+                {activeLiabilities.length > 0 ? (
+                    activeLiabilities.map(liability => <DebtCard 
                         key={liability.id} 
                         liability={liability} 
                         onRegisterPayment={() => onOpenDebtPaymentModal(liability)}
@@ -150,10 +171,39 @@ const Deudas: React.FC<DeudasProps> = ({ profile, liabilities, onOpenDebtPayment
                     />)
                 ) : (
                     <div className="text-center py-10 px-6 bg-white dark:bg-gray-800 rounded-xl shadow-inner">
-                        <p className="text-gray-500 dark:text-gray-400">¡Felicidades! No tienes deudas activas en este momento.</p>
+                        {paidLiabilities.length > 0 ? (
+                            <p className="text-gray-500 dark:text-gray-400 font-medium">¡Excelente! No tienes deudas pendientes por pagar.</p>
+                        ) : (
+                            <p className="text-gray-500 dark:text-gray-400">¡Felicidades! No tienes deudas activas en este momento.</p>
+                        )}
                     </div>
                 )}
             </div>
+
+            {paidLiabilities.length > 0 && (
+                <div className="pt-8 border-t border-gray-200 dark:border-gray-700">
+                    <button
+                        onClick={() => setShowHistory(!showHistory)}
+                        className="flex items-center justify-center w-full gap-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800/50"
+                    >
+                        <span className="font-semibold text-sm">{showHistory ? 'Ocultar deudas pagadas' : `Ver historial de deudas pagadas (${paidLiabilities.length})`}</span>
+                    </button>
+                    
+                    {showHistory && (
+                        <div className="mt-4 space-y-4 animate-fade-in grayscale hover:grayscale-0 transition-all duration-500 opacity-75 hover:opacity-100">
+                             {paidLiabilities.map(liability => <DebtCard 
+                                key={liability.id} 
+                                liability={liability} 
+                                onRegisterPayment={() => onOpenDebtPaymentModal(liability)}
+                                onAddValue={() => onOpenAddValueToDebtModal(liability)}
+                                onEdit={() => onOpenEditDebtModal(liability)}
+                                onOpenDetails={() => onOpenDebtDetailModal(liability)}
+                                onDelete={() => onDeleteDebt(liability.id)}
+                            />)}
+                        </div>
+                    )}
+                </div>
+            )}
         </div>
     );
 };
