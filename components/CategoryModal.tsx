@@ -5,6 +5,8 @@ import PlusIcon from './icons/PlusIcon';
 import TrashIcon from './icons/TrashIcon';
 import CategoryIcon from './CategoryIcon';
 import ArrowLeftIcon from './icons/ArrowLeftIcon';
+import ChevronUpIcon from './icons/ChevronUpIcon';
+import ChevronDownIcon from './icons/ChevronDownIcon';
 
 interface CategoryModalProps {
   isOpen: boolean;
@@ -14,10 +16,11 @@ interface CategoryModalProps {
   onAddCategory: (name: string, icon: string) => void;
   onUpdateCategory: (id: string, name: string, icon: string) => void;
   onDeleteCategory: (id: string) => void;
+  onReorderCategories?: (newCategories: Category[]) => void;
 }
 
 const CategoryModal: React.FC<CategoryModalProps> = ({ 
-    isOpen, onClose, categories, onSelectCategory, onAddCategory, onUpdateCategory, onDeleteCategory 
+    isOpen, onClose, categories, onSelectCategory, onAddCategory, onUpdateCategory, onDeleteCategory, onReorderCategories
 }) => {
   const [editingState, setEditingState] = useState<{ id: string; field: 'name' | 'icon' } | null>(null);
   const [editValue, setEditValue] = useState('');
@@ -107,10 +110,26 @@ const CategoryModal: React.FC<CategoryModalProps> = ({
     }
   };
 
+  const handleMoveUp = (index: number) => {
+      if (index === 0) return;
+      const newCategories = [...categories];
+      [newCategories[index - 1], newCategories[index]] = [newCategories[index], newCategories[index - 1]];
+      onReorderCategories?.(newCategories);
+  };
+
+  const handleMoveDown = (index: number) => {
+      if (index === categories.length - 1) return;
+      const newCategories = [...categories];
+      [newCategories[index + 1], newCategories[index]] = [newCategories[index], newCategories[index + 1]];
+      onReorderCategories?.(newCategories);
+  };
+
   const filteredCategories = categories.filter(cat =>
     cat.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     cat.icon.includes(searchTerm)
   );
+  
+  const canReorder = !searchTerm && onReorderCategories;
 
   const renderCreateView = () => (
     <>
@@ -156,7 +175,7 @@ const CategoryModal: React.FC<CategoryModalProps> = ({
           className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-[#008f39] focus:border-[#008f39] bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100"
         />
         <div className="space-y-2 overflow-y-auto">
-          {filteredCategories.map(cat => {
+          {filteredCategories.map((cat, index) => {
             const isEditingName = editingState?.id === cat.id && editingState.field === 'name';
             const isEditingIcon = editingState?.id === cat.id && editingState.field === 'icon';
 
@@ -181,6 +200,24 @@ const CategoryModal: React.FC<CategoryModalProps> = ({
                   )}
                 </div>
                 <div className="flex items-center space-x-1">
+                  {canReorder && (
+                      <>
+                        <button 
+                            onClick={() => handleMoveUp(index)} 
+                            disabled={index === 0}
+                            className="p-2 text-gray-400 hover:text-blue-500 transition-colors disabled:opacity-30 disabled:hover:text-gray-400"
+                        >
+                            <ChevronUpIcon className="w-5 h-5" />
+                        </button>
+                        <button 
+                            onClick={() => handleMoveDown(index)} 
+                            disabled={index === categories.length - 1}
+                            className="p-2 text-gray-400 hover:text-blue-500 transition-colors disabled:opacity-30 disabled:hover:text-gray-400"
+                        >
+                            <ChevronDownIcon className="w-5 h-5" />
+                        </button>
+                      </>
+                  )}
                   <button onClick={() => handleDelete(cat.id)} className="p-2 text-gray-400 hover:text-red-500 transition-colors">
                     <TrashIcon className="w-5 h-5" />
                   </button>

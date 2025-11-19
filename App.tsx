@@ -827,6 +827,10 @@ const App: React.FC = () => {
     }
     setCategories(prev => prev.filter(cat => cat.id !== id));
   }, [profiles, categories]);
+  
+  const handleReorderCategories = useCallback((newOrder: Category[]) => {
+    setCategories(newOrder);
+  }, []);
 
   const handleAddBankAccount = useCallback((name: string, color: string) => {
     const newBankAccount: BankAccount = { id: crypto.randomUUID(), name, color };
@@ -1935,6 +1939,7 @@ const App: React.FC = () => {
                 onImportDataFromJson={handleImportDataFromJson}
                 onManageFixedExpenses={() => setIsFixedExpenseModalOpen(true)}
                 onManageQuickExpenses={() => setIsQuickExpenseModalOpen(true)}
+                onReorderCategories={handleReorderCategories}
             /> }
             { currentPage === 'ingresos' && <Ingresos
                 profile={activeProfile}

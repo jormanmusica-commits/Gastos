@@ -22,6 +22,7 @@ interface AjustesProps {
   onImportDataFromJson: (file: File) => void;
   onManageFixedExpenses: () => void;
   onManageQuickExpenses: () => void;
+  onReorderCategories?: (newCategories: Category[]) => void;
 }
 
 const Ajustes: React.FC<AjustesProps> = ({ 
@@ -31,7 +32,8 @@ const Ajustes: React.FC<AjustesProps> = ({
     onExportAllDataToJson,
     onImportDataFromJson,
     onManageFixedExpenses,
-    onManageQuickExpenses
+    onManageQuickExpenses,
+    onReorderCategories
 }) => {
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [isBankAccountModalOpen, setIsBankAccountModalOpen] = useState(false);
@@ -156,6 +158,7 @@ const Ajustes: React.FC<AjustesProps> = ({
         onAddCategory={onAddCategory}
         onUpdateCategory={onUpdateCategory}
         onDeleteCategory={onDeleteCategory}
+        onReorderCategories={onReorderCategories}
       />
 
       <BankAccountModal
