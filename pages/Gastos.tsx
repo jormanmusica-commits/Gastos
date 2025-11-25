@@ -148,6 +148,19 @@ const Gastos: React.FC<GastosProps> = ({
         setFixedExpenseToPay(null);
     };
 
+    const handleMarkFixedExpenseAsPaid = (expense: FixedExpense, date: string) => {
+        onAddTransaction(
+            expense.name,
+            0, // Zero amount so it doesn't affect balance
+            date,
+            'expense',
+            CASH_METHOD_ID, // Dummy method, won't be used for calculation since amount is 0
+            expense.categoryId,
+            'Marcado como pagado manualmente (Sin restar saldo)'
+        );
+        setFixedExpenseToPay(null);
+    };
+
     const handleConfirmQuickPayment = (expense: QuickExpense, paymentMethodId: string) => {
       const today = new Date().toISOString().split('T')[0];
 
@@ -352,6 +365,7 @@ const Gastos: React.FC<GastosProps> = ({
             bankAccounts={bankAccounts}
             balancesByMethod={balancesByMethod}
             onConfirm={handleConfirmFixedPayment}
+            onMarkAsPaid={handleMarkFixedExpenseAsPaid}
             currency={currency}
             minDateForExpenses={minDateForExpenses}
         />

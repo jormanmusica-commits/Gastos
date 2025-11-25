@@ -3,6 +3,7 @@ import { FixedExpense, BankAccount } from '../types';
 import CloseIcon from './icons/CloseIcon';
 import CustomDatePicker from './CustomDatePicker';
 import AmountInput from './AmountInput';
+import EyeOffIcon from './icons/EyeOffIcon';
 
 const CASH_METHOD_ID = 'efectivo';
 
@@ -13,12 +14,13 @@ interface PayFixedExpenseModalProps {
   bankAccounts: BankAccount[];
   balancesByMethod: Record<string, number>;
   onConfirm: (expense: FixedExpense, date: string, paymentMethodId: string, amount: number) => void;
+  onMarkAsPaid: (expense: FixedExpense, date: string) => void;
   currency: string;
   minDateForExpenses?: string;
 }
 
 const PayFixedExpenseModal: React.FC<PayFixedExpenseModalProps> = ({
-  isOpen, onClose, expense, bankAccounts, balancesByMethod, onConfirm, currency, minDateForExpenses
+  isOpen, onClose, expense, bankAccounts, balancesByMethod, onConfirm, onMarkAsPaid, currency, minDateForExpenses
 }) => {
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [paymentMethodId, setPaymentMethodId] = useState<string>('');
@@ -68,6 +70,13 @@ const PayFixedExpenseModal: React.FC<PayFixedExpenseModalProps> = ({
       return;
     }
     onConfirm(expense, date, paymentMethodId, numericPaymentAmount);
+  };
+
+  const handleMarkAsPaid = () => {
+    if (!expense) return;
+    if (window.confirm('¿Estás seguro? Esto marcará el gasto como pagado en la lista de este mes, pero NO se restará dinero de tu saldo actual.')) {
+        onMarkAsPaid(expense, date);
+    }
   };
 
   if (!isOpen || !expense) return null;
@@ -125,13 +134,21 @@ const PayFixedExpenseModal: React.FC<PayFixedExpenseModalProps> = ({
           {error && <p className="text-red-500 text-sm text-center">{error}</p>}
         </div>
 
-        <footer className="p-4 border-t border-gray-200 dark:border-gray-700 mt-auto">
+        <footer className="p-4 border-t border-gray-200 dark:border-gray-700 mt-auto space-y-3">
           <button
             onClick={handleSubmit}
             disabled={!paymentMethodId || (paymentSources.find(s => s.id === paymentMethodId)?.balance || 0) < numericPaymentAmount}
             className="w-full bg-red-500 text-white font-bold py-3 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-gray-900 transition-colors hover:bg-red-600 disabled:bg-gray-400 disabled:cursor-not-allowed"
           >
             Confirmar Pago
+          </button>
+          
+          <button
+            onClick={handleMarkAsPaid}
+            className="w-full border-2 border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 font-bold py-3 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-gray-900 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-center gap-2"
+          >
+            <EyeOffIcon className="w-5 h-5" />
+            Solo marcar como pagado (Sin restar saldo)
           </button>
         </footer>
       </div>
