@@ -887,6 +887,33 @@ const App: React.FC = () => {
     setGiftingFixedExpense(null); // Close modal
   }, [activeProfile, updateActiveProfileData, showToast]);
 
+  const handleUnmarkFixedExpense = useCallback((expenseId: string) => {
+    if (!activeProfile) return;
+
+    const expense = activeProfile.data.fixedExpenses.find(e => e.id === expenseId);
+    if (!expense) return;
+
+    // Find the hidden transaction for this expense in the current month
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+
+    const transactionToDelete = activeProfile.data.transactions.find(t => {
+        const [year, month] = t.date.split('-').map(Number);
+        return t.type === 'expense' &&
+               t.description === expense.name &&
+               t.isHidden === true &&
+               year === currentYear &&
+               (month - 1) === currentMonth;
+    });
+
+    if (transactionToDelete) {
+        const updatedTransactions = activeProfile.data.transactions.filter(t => t.id !== transactionToDelete.id);
+        updateActiveProfileData(data => ({ ...data, transactions: updatedTransactions }));
+        showToast("Gasto desmarcado");
+    }
+  }, [activeProfile, updateActiveProfileData, showToast]);
+
   const handleAddQuickExpense = useCallback((name: string, amount: number, categoryId: string | undefined, icon: string) => {
     if (!activeProfile) return;
     // Check if a quick expense with the same name already exists to avoid duplicates
@@ -2063,6 +2090,7 @@ const App: React.FC = () => {
             onUpdateCategory={handleUpdateCategory}
             onDeleteCategory={handleDeleteCategory}
             onOpenGiftModal={setGiftingFixedExpense}
+            onUnmarkFixedExpense={handleUnmarkFixedExpense}
         />
         <QuickExpenseModal
             isOpen={isQuickExpenseModalOpen}

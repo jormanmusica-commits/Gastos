@@ -1,9 +1,9 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { FixedExpense, BankAccount } from '../types';
 import CloseIcon from './icons/CloseIcon';
 import CustomDatePicker from './CustomDatePicker';
 import AmountInput from './AmountInput';
-import EyeOffIcon from './icons/EyeOffIcon';
 
 const CASH_METHOD_ID = 'efectivo';
 
@@ -72,13 +72,6 @@ const PayFixedExpenseModal: React.FC<PayFixedExpenseModalProps> = ({
     onConfirm(expense, date, paymentMethodId, numericPaymentAmount);
   };
 
-  const handleMarkAsPaid = () => {
-    if (!expense) return;
-    if (window.confirm('¿Estás seguro? Esto marcará el gasto como pagado en la lista de este mes, pero NO se restará dinero de tu saldo actual.')) {
-        onMarkAsPaid(expense, date);
-    }
-  };
-
   if (!isOpen || !expense) return null;
 
   const selectedSourceDetails = paymentSources.find(s => s.id === paymentMethodId);
@@ -141,14 +134,6 @@ const PayFixedExpenseModal: React.FC<PayFixedExpenseModalProps> = ({
             className="w-full bg-red-500 text-white font-bold py-3 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-gray-900 transition-colors hover:bg-red-600 disabled:bg-gray-400 disabled:cursor-not-allowed"
           >
             Confirmar Pago
-          </button>
-          
-          <button
-            onClick={handleMarkAsPaid}
-            className="w-full border-2 border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 font-bold py-3 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-gray-900 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-center gap-2"
-          >
-            <EyeOffIcon className="w-5 h-5" />
-            Solo marcar como pagado (Sin restar saldo)
           </button>
         </footer>
       </div>
