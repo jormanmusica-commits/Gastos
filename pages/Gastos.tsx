@@ -33,7 +33,7 @@ interface GastosProps {
   onAddQuickExpense: (name: string, amount: number, categoryId: string | undefined, icon: string) => void;
   minDateForExpenses?: string;
   onInitiateTransfer: (fromAccountId: string) => void;
-  onOpenGiftModal: (expense: FixedExpense) => void;
+  onOpenGiftModal: (expenseId: string) => void; // Actually handles visual toggle
   categories: Category[];
   totalFixedExpenses: number;
   totalPaidFixedExpensesThisMonth: number;
@@ -149,19 +149,7 @@ const Gastos: React.FC<GastosProps> = ({
         setFixedExpenseToPay(null);
     };
 
-    const handleMarkFixedExpenseAsPaid = (expense: FixedExpense, date: string) => {
-        onAddTransaction(
-            expense.name,
-            0, // Zero amount so it doesn't affect balance
-            date,
-            'expense',
-            CASH_METHOD_ID, // Dummy method, won't be used for calculation since amount is 0
-            expense.categoryId,
-            'Marcado como pagado manualmente (Sin restar saldo)',
-            { isHidden: true } // Pass isHidden option
-        );
-        setFixedExpenseToPay(null);
-    };
+    // Removed handleMarkFixedExpenseAsPaid since we now use purely visual toggle
 
     const handleConfirmQuickPayment = (expense: QuickExpense, paymentMethodId: string) => {
       const today = new Date().toISOString().split('T')[0];
@@ -182,9 +170,9 @@ const Gastos: React.FC<GastosProps> = ({
       setQuickExpenseToPay(null);
   };
 
-    const handleOpenGiftModal = (expense: FixedExpense) => {
-        setIsFixedExpenseModalOpen(false);
-        onOpenGiftModal(expense);
+    const handleToggleVisualPayment = (expenseId: string) => {
+        // No modal needed, direct toggle
+        onOpenGiftModal(expenseId);
     };
 
     const formatCurrency = (amount: number) => {
@@ -358,7 +346,7 @@ const Gastos: React.FC<GastosProps> = ({
           categories={categories}
           onSelectFixedExpense={handleSelectFixedExpense}
           currency={currency}
-          onOpenGiftModal={handleOpenGiftModal}
+          onToggleVisualPayment={handleToggleVisualPayment}
         />
         <PayFixedExpenseModal
             isOpen={!!fixedExpenseToPay}
@@ -367,7 +355,7 @@ const Gastos: React.FC<GastosProps> = ({
             bankAccounts={bankAccounts}
             balancesByMethod={balancesByMethod}
             onConfirm={handleConfirmFixedPayment}
-            onMarkAsPaid={handleMarkFixedExpenseAsPaid}
+            onMarkAsPaid={() => {}} // Not used anymore in modal
             currency={currency}
             minDateForExpenses={minDateForExpenses}
         />

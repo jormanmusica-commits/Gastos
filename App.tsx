@@ -312,6 +312,10 @@ const App: React.FC = () => {
                     ...p.data,
                     bankAccounts: p.data.bankAccounts || [],
                     quickExpenses: p.data.quickExpenses || [],
+                    fixedExpenses: (p.data.fixedExpenses || []).map((fe: FixedExpense) => ({
+                        ...fe,
+                        paidMonths: fe.paidMonths || []
+                    })),
                     liabilities: (p.data.liabilities || []).map((l: Liability) => ({
                         ...l,
                         originalAmount: (l as any).originalAmount || l.amount,
@@ -853,7 +857,7 @@ const App: React.FC = () => {
   }, [activeProfile, updateActiveProfileData]);
 
   const handleAddFixedExpense = useCallback((name: string, amount: number, categoryId?: string) => {
-    const newFixedExpense: FixedExpense = { id: crypto.randomUUID(), name, amount, categoryId };
+    const newFixedExpense: FixedExpense = { id: crypto.randomUUID(), name, amount, categoryId, paidMonths: [] };
     updateActiveProfileData(data => ({ ...data, fixedExpenses: [...(data.fixedExpenses || []), newFixedExpense] }));
   }, [updateActiveProfileData, activeProfileId]);
 
@@ -861,58 +865,51 @@ const App: React.FC = () => {
     updateActiveProfileData(data => ({ ...data, fixedExpenses: data.fixedExpenses.filter(expense => expense.id !== id) }));
   }, [updateActiveProfileData, activeProfileId]);
 
-  const handleConfirmFixedExpenseAsGift = useCallback((expenseId: string, date: string, details: string) => {
+  const handleToggleFixedExpenseVisualPayment = useCallback((expenseId: string) => {
     if (!activeProfile) return;
 
-    const expense = activeProfile.data.fixedExpenses.find(e => e.id === expenseId);
-    if (!expense) return;
-
-    const newTransaction: Transaction = {
-      id: crypto.randomUUID(),
-      description: expense.name, // Ensure description matches for paid status detection
-      amount: 0, // Zero amount for hidden 'paid' transaction
-      date: date,
-      type: 'expense',
-      paymentMethodId: CASH_METHOD_ID, 
-      categoryId: expense.categoryId,
-      isHidden: true, // Mark as hidden
-      details: details ? `${details} (Marcado como pagado sin restar saldo)` : `(Marcado como pagado sin restar saldo)`,
-    };
-
-    const updatedTransactions = [newTransaction, ...activeProfile.data.transactions];
-    
-    // No validation needed as 0 amount doesn't affect balance.
-    updateActiveProfileData(data => ({ ...data, transactions: updatedTransactions }));
-    showToast("Gasto marcado como pagado (invisible)");
-    setGiftingFixedExpense(null); // Close modal
-  }, [activeProfile, updateActiveProfileData, showToast]);
-
-  const handleUnmarkFixedExpense = useCallback((expenseId: string) => {
-    if (!activeProfile) return;
-
-    const expense = activeProfile.data.fixedExpenses.find(e => e.id === expenseId);
-    if (!expense) return;
-
-    // Find the hidden transaction for this expense in the current month
     const now = new Date();
-    const currentMonth = now.getMonth();
-    const currentYear = now.getFullYear();
+    const currentMonthKey = `${now.getFullYear()}-${now.getMonth() + 1}`; // e.g., '2023-10'
 
-    const transactionToDelete = activeProfile.data.transactions.find(t => {
-        const [year, month] = t.date.split('-').map(Number);
-        return t.type === 'expense' &&
-               t.description === expense.name &&
-               t.isHidden === true &&
-               year === currentYear &&
-               (month - 1) === currentMonth;
+    updateActiveProfileData(data => {
+        const updatedFixedExpenses = data.fixedExpenses.map(expense => {
+            if (expense.id === expenseId) {
+                const paidMonths = expense.paidMonths || [];
+                const isPaid = paidMonths.includes(currentMonthKey);
+                const newPaidMonths = isPaid 
+                    ? paidMonths.filter(m => m !== currentMonthKey)
+                    : [...paidMonths, currentMonthKey];
+                
+                return { ...expense, paidMonths: newPaidMonths };
+            }
+            return expense;
+        });
+        
+        // Cleanup logic: If there are hidden transactions for this month/expense, we could remove them
+        // to keep "No Transactions" promise, or leave them. For now, since the user asked for "No transactions",
+        // we won't create any. If there are old hidden ones, they might stay or we can purge them.
+        // Let's purge hidden ones for this month/expense to be consistent with "Visual Only".
+        
+        const expenseName = data.fixedExpenses.find(e => e.id === expenseId)?.name;
+        let updatedTransactions = data.transactions;
+        
+        if (expenseName) {
+             updatedTransactions = data.transactions.filter(t => {
+                const [year, month] = t.date.split('-').map(Number);
+                const tMonthKey = `${year}-${month}`;
+                
+                // If it is a hidden transaction for this expense in this month, remove it.
+                // This ensures "no transactions" logic takes over completely.
+                if (t.isHidden && t.description === expenseName && tMonthKey === currentMonthKey) {
+                    return false;
+                }
+                return true;
+            });
+        }
+
+        return { ...data, fixedExpenses: updatedFixedExpenses, transactions: updatedTransactions };
     });
-
-    if (transactionToDelete) {
-        const updatedTransactions = activeProfile.data.transactions.filter(t => t.id !== transactionToDelete.id);
-        updateActiveProfileData(data => ({ ...data, transactions: updatedTransactions }));
-        showToast("Gasto desmarcado");
-    }
-  }, [activeProfile, updateActiveProfileData, showToast]);
+  }, [activeProfile, updateActiveProfileData]);
 
   const handleAddQuickExpense = useCallback((name: string, amount: number, categoryId: string | undefined, icon: string) => {
     if (!activeProfile) return;
@@ -1338,6 +1335,7 @@ const App: React.FC = () => {
     const now = new Date();
     const currentMonth = now.getMonth();
     const currentYear = now.getFullYear();
+    const currentMonthKey = `${currentYear}-${currentMonth + 1}`;
 
     let mi = 0, me = 0, mib = 0, mic = 0, meb = 0, mec = 0, ti = 0, te = 0;
     
@@ -1389,6 +1387,8 @@ const App: React.FC = () => {
     });
 
     const paidExpenseNames = new Set<string>();
+    
+    // Check real transactions
     activeProfile.data.transactions
         .filter(t => {
             if (t.type !== 'expense') return false;
@@ -1398,6 +1398,13 @@ const App: React.FC = () => {
         .forEach(t => {
             paidExpenseNames.add(t.description);
         });
+        
+    // Check visually paid expenses
+    activeProfile.data.fixedExpenses.forEach(exp => {
+        if (exp.paidMonths && exp.paidMonths.includes(currentMonthKey)) {
+            paidExpenseNames.add(exp.name);
+        }
+    });
         
     const tfe = (activeProfile.data.fixedExpenses || []).reduce((sum, expense) => sum + expense.amount, 0);
     
@@ -2009,7 +2016,7 @@ const App: React.FC = () => {
                 onAddQuickExpense={handleAddQuickExpense}
                 minDateForExpenses={minDateForExpenses}
                 onInitiateTransfer={handleInitiateTransfer}
-                onOpenGiftModal={setGiftingFixedExpense}
+                onOpenGiftModal={handleToggleFixedExpenseVisualPayment}
                 categories={categories}
                 totalFixedExpenses={totalFixedExpenses}
                 totalPaidFixedExpensesThisMonth={totalPaidFixedExpensesThisMonth}
@@ -2089,8 +2096,7 @@ const App: React.FC = () => {
             // FIX: Changed onUpdateCategory to handleUpdateCategory
             onUpdateCategory={handleUpdateCategory}
             onDeleteCategory={handleDeleteCategory}
-            onOpenGiftModal={setGiftingFixedExpense}
-            onUnmarkFixedExpense={handleUnmarkFixedExpense}
+            onToggleVisualPayment={handleToggleFixedExpenseVisualPayment}
         />
         <QuickExpenseModal
             isOpen={isQuickExpenseModalOpen}
@@ -2218,14 +2224,6 @@ const App: React.FC = () => {
             data={editingDebtAddition}
             onUpdate={handleUpdateDebtAddition}
             currency={activeProfile.currency}
-        />
-        <GiftFixedExpenseModal
-            isOpen={!!giftingFixedExpense}
-            onClose={() => setGiftingFixedExpense(null)}
-            expense={giftingFixedExpense}
-            onConfirm={handleConfirmFixedExpenseAsGift}
-            currency={activeProfile.currency}
-            minDateForExpenses={minDateForExpenses}
         />
         {menuItems.length > 0 && (
             <FloatingActionButton

@@ -41,6 +41,7 @@ export interface FixedExpense {
   name: string;
   amount: number;
   categoryId?: string;
+  paidMonths?: string[]; // Array of 'YYYY-MM' strings to track visual payments without transactions
 }
 
 export interface QuickExpense {

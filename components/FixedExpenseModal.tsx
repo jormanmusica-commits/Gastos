@@ -24,59 +24,53 @@ interface FixedExpenseModalProps {
   onAddCategory?: (name: string, icon: string) => void;
   onUpdateCategory?: (id: string, name: string, icon: string) => void;
   onDeleteCategory?: (id: string) => void;
-  onOpenGiftModal?: (expense: FixedExpense) => void;
-  onUnmarkFixedExpense?: (expenseId: string) => void;
+  onToggleVisualPayment?: (expenseId: string) => void;
   mode?: 'manage' | 'select';
 }
 
 const FixedExpenseModal: React.FC<FixedExpenseModalProps> = ({ 
     isOpen, onClose, fixedExpenses, transactions, categories, onAddFixedExpense, onDeleteFixedExpense, onSelectFixedExpense, currency,
-    onAddCategory, onUpdateCategory, onDeleteCategory, onOpenGiftModal, onUnmarkFixedExpense, mode = 'manage'
+    onAddCategory, onUpdateCategory, onDeleteCategory, onToggleVisualPayment, mode = 'manage'
 }) => {
   const [newExpense, setNewExpense] = useState({ name: '', amount: '', categoryId: '' });
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
 
   // Map of expense name -> status info
   const expenseStatusMap = useMemo(() => {
-    if (!isOpen) return new Map<string, { isPaid: boolean, isHidden: boolean }>();
+    if (!isOpen) return new Map<string, { isPaid: boolean, isReal: boolean }>();
 
     const now = new Date();
     const currentMonth = now.getMonth();
     const currentYear = now.getFullYear();
+    const currentMonthKey = `${currentYear}-${currentMonth + 1}`;
 
-    const statusMap = new Map<string, { isPaid: boolean, isHidden: boolean }>();
+    const statusMap = new Map<string, { isPaid: boolean, isReal: boolean }>();
 
+    // First check real transactions (real payments)
     transactions
         .filter(t => {
             const [year, month] = t.date.split('-').map(Number);
             return t.type === 'expense' &&
                    year === currentYear &&
-                   (month - 1) === currentMonth;
+                   (month - 1) === currentMonth &&
+                   !t.isHidden; // Only care about real transactions here
         })
         .forEach(t => {
-            // If expense name matches transaction description, it's paid
-            // We prioritize 'isHidden' status if multiple transactions exist, but generally one should suffice per month per expense logic.
-            // If ANY matching transaction is NOT hidden (paid with real money), we count it as real payment.
-            // If ONLY hidden transactions exist, we count it as hidden payment.
-            
-            const existing = statusMap.get(t.description);
-            const isCurrentlyHidden = !!t.isHidden;
-            
-            if (existing) {
-                // If already marked as paid, update hidden status:
-                // If the new one is REAL (not hidden), then the status becomes Real (isHidden = false).
-                // If currently Real, it stays Real.
-                if (!existing.isHidden) return; // Already real payment found
-                if (!isCurrentlyHidden) {
-                    statusMap.set(t.description, { isPaid: true, isHidden: false });
-                }
-            } else {
-                statusMap.set(t.description, { isPaid: true, isHidden: isCurrentlyHidden });
-            }
+            statusMap.set(t.description, { isPaid: true, isReal: true });
         });
     
+    // Then check visually marked expenses
+    fixedExpenses.forEach(exp => {
+        // If already marked as really paid, skip
+        if (statusMap.get(exp.name)?.isReal) return;
+
+        if (exp.paidMonths && exp.paidMonths.includes(currentMonthKey)) {
+            statusMap.set(exp.name, { isPaid: true, isReal: false });
+        }
+    });
+    
     return statusMap;
-  }, [transactions, isOpen]);
+  }, [transactions, fixedExpenses, isOpen]);
 
   const totalFixedExpenses = useMemo(() => {
     return fixedExpenses.reduce((total, expense) => total + expense.amount, 0);
@@ -159,7 +153,7 @@ const FixedExpenseModal: React.FC<FixedExpenseModalProps> = ({
                 const category = categories.find(c => c.id === exp.categoryId);
                 const status = expenseStatusMap.get(exp.name);
                 const isPaid = !!status?.isPaid;
-                const isHiddenPayment = !!status?.isHidden;
+                const isRealPayment = !!status?.isReal; // Paid via transaction (money spent)
 
                 const itemContent = (
                   <>
@@ -179,8 +173,8 @@ const FixedExpenseModal: React.FC<FixedExpenseModalProps> = ({
                       </div>
                     </div>
                     <div className="flex items-center space-x-2">
-                        {isPaid && !isHiddenPayment && (
-                            <span title="Pagado este mes">
+                        {isPaid && isRealPayment && (
+                            <span title="Pagado con saldo">
                                 <CheckIcon className="w-5 h-5 text-green-500" />
                             </span>
                         )}
@@ -207,28 +201,24 @@ const FixedExpenseModal: React.FC<FixedExpenseModalProps> = ({
                     
                     <div className="flex items-center">
                         {/* 
-                           Logic for EyeOff Button:
-                           1. If NOT paid: Show button (gray). Click -> Open 'Gift' Modal (Mark as paid).
-                           2. If PAID via Hidden: Show button (colored/solid). Click -> Unmark.
-                           3. If PAID via Real: Don't show button (or show disabled check? handled in itemContent).
+                           Toggle Button Logic:
+                           - If NOT paid: Gray Eye (Click to toggle ON)
+                           - If PAID visually (not real): Teal Eye (Click to toggle OFF)
+                           - If PAID really: Hidden (cannot untoggle easily) or Disabled Check
                         */}
-                        {mode === 'select' && (!isPaid || isHiddenPayment) && (
+                        {mode === 'select' && !isRealPayment && (
                             <button
                                 onClick={(e) => { 
                                     e.stopPropagation(); 
-                                    if (isPaid && isHiddenPayment && onUnmarkFixedExpense) {
-                                        onUnmarkFixedExpense(exp.id);
-                                    } else if (!isPaid && onOpenGiftModal) {
-                                        onOpenGiftModal(exp);
-                                    }
+                                    if (onToggleVisualPayment) onToggleVisualPayment(exp.id);
                                 }}
                                 className={`p-2 transition-colors ${
-                                    isPaid && isHiddenPayment 
-                                    ? 'text-teal-500 bg-teal-500/10 hover:bg-teal-500/20' // Active state (click to unmark)
-                                    : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200' // Inactive state (click to mark)
+                                    isPaid 
+                                    ? 'text-teal-500 bg-teal-500/10 hover:bg-teal-500/20' 
+                                    : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200'
                                 }`}
-                                aria-label={isPaid ? "Desmarcar como pagado" : "Marcar como pagado (sin saldo)"}
-                                title={isPaid ? "Desmarcar" : "Marcar como pagado (sin saldo)"}
+                                aria-label={isPaid ? "Destachar" : "Tachar visualmente"}
+                                title={isPaid ? "Destachar" : "Tachar visualmente (sin saldo)"}
                             >
                                 <EyeOffIcon className="w-5 h-5" />
                             </button>
