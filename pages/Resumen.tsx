@@ -1,3 +1,4 @@
+
 import React, { useMemo, useState, useCallback } from 'react';
 import { Profile, Filters, TransactionTypeFilter, Transaction, Category } from '../types';
 import Summary from '../components/Summary';
@@ -48,6 +49,11 @@ const Resumen: React.FC<ResumenProps> = ({
   const [isAdvancedFilterOpen, setIsAdvancedFilterOpen] = useState(false);
   const [advancedFilters, setAdvancedFilters] = useState<Omit<Filters, 'searchTerm'> | null>(null);
 
+  // Filter out hidden transactions from the main list view
+  const visibleTransactions = useMemo(() => {
+    return transactions.filter(t => !t.isHidden);
+  }, [transactions]);
+
   const ahorroCategoryId = useMemo(() => {
     return categories.find(c => c.name.toLowerCase() === 'ahorro')?.id;
   }, [categories]);
@@ -79,7 +85,7 @@ const Resumen: React.FC<ResumenProps> = ({
     const lowerCaseSearchTerm = searchTerm.trim().toLowerCase();
     const hasSearchTerm = lowerCaseSearchTerm.length > 0;
 
-    let results = transactions;
+    let results = visibleTransactions;
 
     if (hasSearchTerm) {
       const numericSearchTerm = lowerCaseSearchTerm.replace(',', '.');
@@ -188,7 +194,7 @@ const Resumen: React.FC<ResumenProps> = ({
 
         return true;
     });
-  }, [transactions, searchTerm, advancedFilters, categories, bankAccounts, ahorroCategoryId, liabilities, loans]);
+  }, [visibleTransactions, searchTerm, advancedFilters, categories, bankAccounts, ahorroCategoryId, liabilities, loans]);
 
   const { totalFilteredIncome, totalFilteredExpenses } = useMemo(() => {
     return filteredTransactions.reduce((acc, t) => {

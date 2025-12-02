@@ -1,3 +1,4 @@
+
 // FIX: Add missing Theme enum to resolve type error in ThemeToggle.tsx.
 export enum Theme {
   DARK = 'dark',
@@ -26,6 +27,7 @@ export interface Transaction {
   liabilityId?: string;
   details?: string;
   isGift?: boolean;
+  isHidden?: boolean;
 }
 
 export interface Category {
@@ -98,7 +100,7 @@ export interface Profile {
 }
 
 
-export type Page = 'inicio' | 'resumen' | 'ajustes' | 'ingresos' | 'gastos' | 'patrimonio' | 'prestamos' | 'deudas' | 'ahorros';
+export type Page = 'inicio' | 'resumen' | 'ajustes' | 'ingresos' | 'gastos' | 'patrimonio' | 'prestamos' | 'deudas' | 'ahorros' | 'add' | 'transferencia';
 
 export type TransactionTypeFilter = 'income' | 'expense' | 'transfer' | 'saving' | 'loan' | 'gift';
 export type PaymentMethodFilter = 'cash' | 'bank';

@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 // FIX: Import Category and FixedExpense types
 import { Page, Profile, Category, FixedExpense, QuickExpense } from '../types';
@@ -19,7 +20,7 @@ interface GastosProps {
   profile: Profile;
   balance: number;
   balancesByMethod: Record<string, number>;
-  onAddTransaction: (description: string, amount: number, date: string, type: 'income' | 'expense', paymentMethodId: string, categoryId?: string, details?: string) => void;
+  onAddTransaction: (description: string, amount: number, date: string, type: 'income' | 'expense', paymentMethodId: string, categoryId?: string, details?: string, options?: { isHidden?: boolean }) => void;
   onNavigate: (page: Page) => void;
   onAddCategory: (name: string, icon: string) => void;
   onUpdateCategory: (id: string, name: string, icon: string) => void;
@@ -156,7 +157,8 @@ const Gastos: React.FC<GastosProps> = ({
             'expense',
             CASH_METHOD_ID, // Dummy method, won't be used for calculation since amount is 0
             expense.categoryId,
-            'Marcado como pagado manualmente (Sin restar saldo)'
+            'Marcado como pagado manualmente (Sin restar saldo)',
+            { isHidden: true } // Pass isHidden option
         );
         setFixedExpenseToPay(null);
     };

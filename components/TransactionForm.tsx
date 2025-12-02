@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Category } from '../types';
 import CustomDatePicker from './CustomDatePicker';
@@ -7,7 +8,7 @@ import CheckIcon from './icons/CheckIcon';
 
 interface TransactionFormProps {
   transactionType: 'income' | 'expense';
-  onAddTransaction: (description: string, amount: number, date: string, categoryId?: string, details?: string, options?: { addAsFixed?: boolean, addAsQuick?: boolean }) => void;
+  onAddTransaction: (description: string, amount: number, date: string, categoryId?: string, details?: string, options?: { addAsFixed?: boolean, addAsQuick?: boolean, isHidden?: boolean }) => void;
   currency: string;
   categories?: Category[];
   selectedCategoryId?: string;

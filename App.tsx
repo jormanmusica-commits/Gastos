@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Transaction, Page, Category, BankAccount, FixedExpense, Profile, ProfileData, Asset, Liability, Loan, ExportSummary, ExportPayload, QuickExpense } from './types';
 import Inicio from './pages/Inicio';
@@ -10,6 +11,8 @@ import Patrimonio from './pages/Patrimonio';
 import Loans from './pages/Loans';
 import Deudas from './pages/Deudas';
 import Ahorros from './pages/Ahorros';
+import Add from './pages/Add';
+import Transferencia from './pages/Transferencia';
 import TransferModal from './components/TransferModal';
 import { validateTransactionChange, findFirstIncomeDate, ValidationError } from './utils/transactionUtils';
 import ProfileCreationModal from './components/ProfileCreationModal';
@@ -408,7 +411,6 @@ const App: React.FC = () => {
   const activeProfile = useMemo(() => profiles.find(p => p.id === activeProfileId), [profiles, activeProfileId]);
 
   // Effect to synchronize viewingDebt state with the main profile state
-  // This ensures the detail modal always shows fresh data after an update
   useEffect(() => {
     if (viewingDebt && activeProfile) {
         const currentVersionInProfile = activeProfile.data.liabilities.find(l => l.id === viewingDebt.id);
@@ -418,7 +420,6 @@ const App: React.FC = () => {
                 setViewingDebt(currentVersionInProfile);
             }
         } else {
-            // The debt was deleted, so close the modal.
             setViewingDebt(null);
         }
     }
@@ -582,7 +583,7 @@ const App: React.FC = () => {
     ));
   }, [activeProfileId]);
   
-  const handleAddTransaction = useCallback((description: string, amount: number, date: string, type: 'income' | 'expense', paymentMethodId: string, categoryId?: string, details?: string) => {
+  const handleAddTransaction = useCallback((description: string, amount: number, date: string, type: 'income' | 'expense', paymentMethodId: string, categoryId?: string, details?: string, options?: { addAsFixed?: boolean; addAsQuick?: boolean; isHidden?: boolean }) => {
     if (!activeProfile) return;
 
     let finalCategoryId = categoryId;
@@ -602,6 +603,7 @@ const App: React.FC = () => {
       paymentMethodId,
       categoryId: finalCategoryId,
       details,
+      isHidden: options?.isHidden,
     };
 
     if (type === 'expense') {
@@ -868,20 +870,20 @@ const App: React.FC = () => {
     const newTransaction: Transaction = {
       id: crypto.randomUUID(),
       description: expense.name, // Ensure description matches for paid status detection
-      amount: expense.amount,
+      amount: 0, // Zero amount for hidden 'paid' transaction
       date: date,
       type: 'expense',
-      paymentMethodId: 'gift', // This will be ignored by balance calculations
+      paymentMethodId: CASH_METHOD_ID, 
       categoryId: expense.categoryId,
-      isGift: true,
-      details: details, // Store user-provided text in details
+      isHidden: true, // Mark as hidden
+      details: details ? `${details} (Marcado como pagado sin restar saldo)` : `(Marcado como pagado sin restar saldo)`,
     };
 
     const updatedTransactions = [newTransaction, ...activeProfile.data.transactions];
     
-    // No validation needed as gift transactions don't affect balance.
+    // No validation needed as 0 amount doesn't affect balance.
     updateActiveProfileData(data => ({ ...data, transactions: updatedTransactions }));
-    showToast("Transacción realizada");
+    showToast("Gasto marcado como pagado (invisible)");
     setGiftingFixedExpense(null); // Close modal
   }, [activeProfile, updateActiveProfileData, showToast]);
 
@@ -923,7 +925,7 @@ const App: React.FC = () => {
     const sortedTransactions = [...activeProfile.data.transactions].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
     for (const t of sortedTransactions) {
-      if (t.isGift) continue;
+      if (t.isGift || t.isHidden) continue;
       const amount = t.type === 'income' ? t.amount : -t.amount;
       balances[t.paymentMethodId] = (balances[t.paymentMethodId] || 0) + amount;
     }
@@ -1190,7 +1192,7 @@ const App: React.FC = () => {
     
     // Recalculate summaries for export
     const { totalIncome, totalExpenses, monthlyIncome, monthlyExpenses } = activeProfile.data.transactions.reduce((acc, t) => {
-        if (t.isGift || t.transferId || t.patrimonioId) return acc;
+        if (t.isGift || t.isHidden || t.transferId || t.patrimonioId) return acc;
         const date = new Date(t.date);
         const isCurrentMonth = date.getMonth() === new Date().getMonth() && date.getFullYear() === new Date().getFullYear();
         if (t.type === 'income') {
@@ -1315,7 +1317,7 @@ const App: React.FC = () => {
     const ahorroCategoryId = categories.find(c => c.name.toLowerCase() === 'ahorro')?.id;
 
     for (const t of activeProfile.data.transactions) {
-        if (t.isGift) continue;
+        if (t.isGift || t.isHidden) continue;
         const isTransfer = !!t.transferId;
         const isSaving = t.categoryId === ahorroCategoryId;
         const isPatrimonioMovement = t.patrimonioType === 'asset' || t.patrimonioType === 'liability' || t.patrimonioType === 'loan' || t.patrimonioType === 'debt-payment' || t.patrimonioType === 'loan-repayment' || t.patrimonioType === 'loan-addition' || t.patrimonioType === 'debt-addition';
@@ -1924,6 +1926,17 @@ const App: React.FC = () => {
                 categories={categories}
                 onEditTransaction={setEditingTransaction}
             /> }
+            { currentPage === 'add' && <Add onNavigate={handleNavigate} /> }
+            { currentPage === 'transferencia' && <Transferencia
+                balance={balance}
+                balancesByMethod={balancesByMethod}
+                bankAccounts={activeProfile.data.bankAccounts}
+                transactions={activeProfile.data.transactions}
+                onAddTransfer={handleAddTransfer}
+                onNavigate={handleNavigate}
+                initialDirection={null} // Or handle initial direction if needed
+                currency={activeProfile.currency}
+            /> }
             { currentPage === 'ajustes' && <Ajustes 
                 categories={categories}
                 onAddCategory={handleAddCategory}
@@ -2049,6 +2062,7 @@ const App: React.FC = () => {
             // FIX: Changed onUpdateCategory to handleUpdateCategory
             onUpdateCategory={handleUpdateCategory}
             onDeleteCategory={handleDeleteCategory}
+            onOpenGiftModal={setGiftingFixedExpense}
         />
         <QuickExpenseModal
             isOpen={isQuickExpenseModalOpen}
