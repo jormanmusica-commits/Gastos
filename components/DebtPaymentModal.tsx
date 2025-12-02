@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Liability, BankAccount } from '../types';
 import CloseIcon from './icons/CloseIcon';
 import AmountInput from './AmountInput';
+import CustomDatePicker from './CustomDatePicker';
 
 const CASH_METHOD_ID = 'efectivo';
 
@@ -11,7 +12,7 @@ interface DebtPaymentModalProps {
   liability: Liability | null;
   bankAccounts: BankAccount[];
   balancesByMethod: Record<string, number>;
-  onPayDebts: (payments: { liabilityId: string, amount: number }[], paymentMethodId: string) => void;
+  onPayDebts: (payments: { liabilityId: string, amount: number }[], paymentMethodId: string, date: string) => void;
   currency: string;
 }
 
@@ -20,6 +21,7 @@ const DebtPaymentModal: React.FC<DebtPaymentModalProps> = ({
 }) => {
   const [paymentAmount, setPaymentAmount] = useState('');
   const [paymentMethodId, setPaymentMethodId] = useState<string>('');
+  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [error, setError] = useState('');
 
   const formatCurrency = (amount: number) => {
@@ -41,6 +43,7 @@ const DebtPaymentModal: React.FC<DebtPaymentModalProps> = ({
     if (isOpen && liability) {
       setPaymentAmount(liability.amount.toString());
       setError('');
+      setDate(new Date().toISOString().split('T')[0]);
       // Pre-select the first available source if none is selected or the current one is invalid
       if (!paymentMethodId || !paymentSources.find(p => p.id === paymentMethodId)) {
         setPaymentMethodId(paymentSources.length > 0 ? paymentSources[0].id : '');
@@ -62,13 +65,17 @@ const DebtPaymentModal: React.FC<DebtPaymentModalProps> = ({
       setError('Debes seleccionar un método de pago.');
       return;
     }
+    if (!date) {
+        setError('Debes seleccionar una fecha.');
+        return;
+    }
     const source = paymentSources.find(s => s.id === paymentMethodId);
     if (!source || source.balance < numericPaymentAmount) {
       setError('Fondos insuficientes en la cuenta de origen.');
       return;
     }
     const payment = { liabilityId: liability.id, amount: numericPaymentAmount };
-    onPayDebts([payment], paymentMethodId);
+    onPayDebts([payment], paymentMethodId, date);
   };
 
   if (!isOpen || !liability) return null;
@@ -138,6 +145,18 @@ const DebtPaymentModal: React.FC<DebtPaymentModalProps> = ({
                 </option>
               ))}
             </select>
+          </div>
+
+          <div>
+            <label htmlFor="payment-date" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Fecha de Pago
+            </label>
+            <CustomDatePicker
+                value={date}
+                onChange={setDate}
+                themeColor="#ef4444"
+                displayMode="modal"
+            />
           </div>
           
           {error && <p className="text-red-500 text-sm text-center">{error}</p>}

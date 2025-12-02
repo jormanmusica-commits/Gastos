@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Transaction, Page, Category, BankAccount, FixedExpense, Profile, ProfileData, Asset, Liability, Loan, ExportSummary, ExportPayload, QuickExpense } from './types';
 import Inicio from './pages/Inicio';
@@ -1423,7 +1422,7 @@ const App: React.FC = () => {
     return firstIncomeDate ? firstIncomeDate.toISOString().split('T')[0] : undefined;
   }, [activeProfile]);
   
-    const handlePayDebts = useCallback((payments: { liabilityId: string, amount: number }[], paymentMethodId: string) => {
+    const handlePayDebts = useCallback((payments: { liabilityId: string, amount: number }[], paymentMethodId: string, date: string) => {
         if (!activeProfile) return;
         
         const newTransactions: Transaction[] = [];
@@ -1437,7 +1436,7 @@ const App: React.FC = () => {
                 id: crypto.randomUUID(),
                 description: `Pago Deuda: ${liability.name}`,
                 amount: payment.amount,
-                date: new Date().toISOString().split('T')[0],
+                date: date,
                 type: 'expense',
                 paymentMethodId: paymentMethodId,
                 liabilityId: liability.id,
