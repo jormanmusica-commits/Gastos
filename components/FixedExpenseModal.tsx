@@ -6,7 +6,7 @@ import TrashIcon from './icons/TrashIcon';
 import BoltIcon from './icons/BoltIcon';
 import CategoryModal from './CategoryModal';
 import CheckIcon from './icons/CheckIcon';
-import EyeOffIcon from './icons/EyeOffIcon';
+import GiftIcon from './icons/GiftIcon';
 import CategoryIcon from './CategoryIcon';
 import AmountInput from './AmountInput';
 
@@ -185,11 +185,11 @@ const FixedExpenseModal: React.FC<FixedExpenseModalProps> = ({
                       {mode === 'select' && !isPaid && onOpenGiftModal && (
                           <button
                               onClick={(e) => { e.stopPropagation(); onOpenGiftModal(exp); }}
-                              className="p-2 text-gray-400 hover:text-slate-500 transition-colors"
-                              aria-label={`Marcar ${exp.name} como pagado (sin saldo)`}
-                              title="Marcar como pagado (sin saldo)"
+                              className="p-2 text-gray-400 hover:text-teal-500 transition-colors"
+                              aria-label={`Marcar ${exp.name} como regalo`}
+                              title="Marcar como regalo"
                           >
-                              <EyeOffIcon className="w-5 h-5" />
+                              <GiftIcon className="w-5 h-5" />
                           </button>
                       )}
                       {mode === 'manage' && (

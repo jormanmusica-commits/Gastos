@@ -1,4 +1,3 @@
-
 // FIX: Add missing Theme enum to resolve type error in ThemeToggle.tsx.
 export enum Theme {
   DARK = 'dark',
@@ -83,7 +82,6 @@ export interface Loan {
 export interface ProfileData {
   transactions: Transaction[];
   bankAccounts: BankAccount[];
-  categories: Category[];
   fixedExpenses: FixedExpense[];
   quickExpenses: QuickExpense[];
   assets: Asset[];
