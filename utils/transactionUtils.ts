@@ -1,3 +1,4 @@
+
 import { Transaction, BankAccount } from '../types';
 
 const CASH_METHOD_ID = 'efectivo';
@@ -19,7 +20,7 @@ export const validateTransactionChange = (updatedTransactions: Transaction[], ba
     return null;
   }
 
-  // Rule: Chronological balances cannot be negative.
+  // Rule: Chronological balances cannot be negative for real transactions.
   const sorted = [...updatedTransactions].sort((a, b) => {
     const dateA = new Date(a.date).getTime();
     const dateB = new Date(b.date).getTime();
@@ -42,7 +43,8 @@ export const validateTransactionChange = (updatedTransactions: Transaction[], ba
   let currentBalances = { ...initialBalances };
 
   for (const t of sorted) {
-    if (t.isGift) continue;
+    // CRITICAL FIX: Skip transactions that don't affect real balance (Gifts and Hidden/Read-only)
+    if (t.isGift || t.isHidden) continue;
     
     const amount = t.type === 'income' ? t.amount : -t.amount;
     const newBalanceForMethod = (currentBalances[t.paymentMethodId] || 0) + amount;
@@ -74,7 +76,7 @@ export const validateTransactionChange = (updatedTransactions: Transaction[], ba
  * @returns The Date of the first income, or null if no income exists.
  */
 export const findFirstIncomeDate = (transactions: Transaction[]): Date | null => {
-  const incomes = transactions.filter(t => t.type === 'income');
+  const incomes = transactions.filter(t => t.type === 'income' && !t.isHidden);
   if (incomes.length === 0) {
     return null;
   }
@@ -97,17 +99,19 @@ export const findFirstDateWithSufficientBalance = (transactions: Transaction[], 
     return null; // No minimum date required for zero or negative amount
   }
 
-  const sorted = [...transactions].sort((a, b) => {
-    const dateA = new Date(a.date).getTime();
-    const dateB = new Date(b.date).getTime();
-    if (dateA !== dateB) {
-      return dateA - dateB;
-    }
-    // Prioritize income on the same day to allow spending it immediately
-    if (a.type === 'income' && b.type === 'expense') return -1;
-    if (a.type === 'expense' && b.type === 'income') return 1;
-    return 0;
-  });
+  const sorted = [...transactions]
+    .filter(t => !t.isHidden && !t.isGift) // Only real balance-affecting transactions
+    .sort((a, b) => {
+      const dateA = new Date(a.date).getTime();
+      const dateB = new Date(b.date).getTime();
+      if (dateA !== dateB) {
+        return dateA - dateB;
+      }
+      // Prioritize income on the same day to allow spending it immediately
+      if (a.type === 'income' && b.type === 'expense') return -1;
+      if (a.type === 'expense' && b.type === 'income') return 1;
+      return 0;
+    });
 
   let balance = 0;
 
